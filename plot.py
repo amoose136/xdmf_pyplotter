@@ -65,7 +65,7 @@ ax = fig.add_subplot(111)
 # def format_coord(x, y):
 # 	return 'Theta=%1.4f, r=%9.4g, %s=%1.4f'%(x, y, 'entropy',entropy[max(0,np.where(azimuths<x)[0][-1]-1),max(0,np.where(zeniths<y)[0][-1]-1)])
 
-# Setup output string to intergate data interactively for polar
+# Setup output string to intergate data interactively for cartesian coordinates
 def format_coord(x, y):
 	return 'Theta=%1.4f (rad), r=%9.4g, %s=%1.4f'%(cart2pol(x,y)[1], cart2pol(x,y)[0], 'entropy',entropy[max(0,np.where(azimuths<cart2pol(x,y)[0])[0][-1]-1),max(0,np.where(zeniths<cart2pol(x,y)[1])[0][-1]-1)])
 
@@ -74,7 +74,7 @@ zoomvalue=1./90
 plt.axis([x.min()*zoomvalue, x.max()*zoomvalue, y.min(), y.max()*zoomvalue])
 ax.format_coord = format_coord
 
-# fig.subplots_adjust(bottom=-.9)
+# fig.subplots_adjust(bottom=0)
 cdict = {'red':((.000, 0.263, 0.263),
 			(0.143, 0.000, 0.000),
 			(0.286, 0.000, 0.000),
@@ -107,5 +107,5 @@ candybar=LinearSegmentedColormap('test',cdict,N=256,gamma=1.0)
 test=ax.pcolormesh(x, y, entropy,cmap=candybar)
 plt.colorbar(test,ax=ax)
 plt.axes().set_aspect('equal', 'datalim')
-# plt.savefig('test',format='pdf')
+# plt.savefig('test',format='svg')
 plt.show()
