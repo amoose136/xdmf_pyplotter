@@ -2,7 +2,8 @@
 from __future__ import print_function # Anticipating the PY3 apocalypse in 2020
 import sys # For basic file IO stuff
 from pdb import set_trace as br #For debugging I prefer the c style "break" nomenclature to "trace"
-
+import time as time_lib
+start_time = time_lib.time()
 # define an error printing function for error reporting to terminal STD error IO stream
 def eprint(*arg, **kwargs):
 	print(*arg, file=sys.stderr, **kwargs)
@@ -111,5 +112,9 @@ test=ax.pcolormesh(x, y, entropy,cmap=candybar)
 plt.colorbar(test,ax=ax)
 
 plt.axes().set_aspect('equal', 'datalim')
-# plt.savefig('test',format='svg')
-plt.show()
+# Comment and uncomment the next line to save the image:
+plt.savefig('test.png',format='png') 
+print('time elapsed:	'+str(time_lib.time()-start_time))
+del start_time
+# Comment and uncomment the next line to show and interactive plot after optionally saving the image (above):
+# plt.show()
