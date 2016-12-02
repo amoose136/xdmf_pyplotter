@@ -67,7 +67,9 @@ ax = fig.add_subplot(111)
 
 # Setup mouse-over string to interrogate data interactively when in cartesian coordinates
 def format_coord(x, y):
-	return 'Theta=%1.4f (rad), r=%9.4g, %s=%1.4f'%(cart2pol(x,y)[1], cart2pol(x,y)[0], 'entropy',entropy[max(0,np.where(azimuths<cart2pol(x,y)[0])[0][-1]-1),max(0,np.where(zeniths<cart2pol(x,y)[1])[0][-1]-1)])
+	ia=np.where(azimuths<cart2pol(x,y)[1])[0][-1]
+	ib=np.where(zeniths<cart2pol(x,y)[0])[0][-1]
+	return 'Theta=%1.4f (rad), r=%9.4g, %s=%1.3f'%(cart2pol(x,y)[1], cart2pol(x,y)[0], 'entropy',entropy[ia,ib])
 
 # plt.axis([theta.min(), theta.max(), rad.min(), rad.max()/60])
 zoomvalue=1./90
