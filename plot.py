@@ -1,9 +1,34 @@
 #!/usr/bin/env python
 from __future__ import print_function # Anticipating the PY3 apocalypse in 2020
-import sys # For basic file IO stuff
+import sys, argparse # For basic file IO stuff
 from pdb import set_trace as br #For debugging I prefer the c style "break" nomenclature to "trace"
 import time as time_lib
 start_time = time_lib.time()
+parser = argparse.ArgumentParser(description="Plot variables from XDMF with matplotlib")
+parser.add_argument('--quiet','-q',dest='quiet',action='store_const',const=True, help='only display error messages (default full debug messages)')
+parser.add_argument('--settings','-s',dest='settingsfile',nargs=1)
+parser.add_argument('--threads','-t',dest='threads',nargs=1)
+settings_parser=argparse.ArgumentParser(description="Take input settings for matplotlib")
+settings_parser.add_argument('cmap',metavar='str',type=str,nargs='?',const='hot_desaturated')
+settings_parser.add_argument('cbar_scale',metavar='str',type=str)
+settings_parser.add_argument('cbar_domain')
+settings_parser.add_argument('cbar_enabled')
+settings_parser.add_argument('title')
+settings_parser.add_argument('title_enabled')
+settings_parser.add_argument('title_font')
+settings_parser.add_argument('smooth_zones')
+settings_parser.add_argument('image_format')
+settings_parser.add_argument('image_size')
+settings_parser.add_argument('x_range')
+settings_parser.add_argument('y_range')
+settings_parser.add_argument('x_range_title')
+settings_parser.add_argument('y_range_title')
+settings_parser.add_argument('time_format')
+settings_parser.add_argument('bounce_time_enabled')
+settings_parser.add_argument('elapsed_time_enabled')
+settings_parser.add_argument('variables',type=str)
+
+args=parser.parse_args()
 # define an error printing function for error reporting to terminal STD error IO stream
 def eprint(*arg, **kwargs):
 	print(*arg, file=sys.stderr, **kwargs)
@@ -107,14 +132,14 @@ cdict = {'red':((.000, 0.263, 0.263),
 			(1.000, 0.294, 0.294)),
 }
 # Create colorbar ("hot desaturated" in VisIt)
-candybar=LinearSegmentedColormap('test',cdict,N=256,gamma=1.0)
-test=ax.pcolormesh(x, y, entropy,cmap=candybar)
+hot_desaturated=LinearSegmentedColormap('test',cdict,N=256,gamma=1.0)
+test=ax.pcolormesh(x, y, entropy,cmap=hot_desaturated)
 plt.colorbar(test,ax=ax)
 
 plt.axes().set_aspect('equal', 'datalim')
 # Comment and uncomment the next line to save the image:
-plt.savefig('test.png',format='png') 
-print('time elapsed:	'+str(time_lib.time()-start_time))
+plt.savefig('test.eps',format='eps') 
+qprint('time elapsed:	'+str(time_lib.time()-start_time))
 del start_time
 # Comment and uncomment the next line to show and interactive plot after optionally saving the image (above):
 # plt.show()
