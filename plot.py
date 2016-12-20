@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 from __future__ import print_function # Anticipating the PY3 apocalypse in 2020
-import sys, argparse, csv # For basic file IO stuff
+import sys, argparse, csv, re # For basic file IO stuff, argument parsing, config file reading, text substitution/ regex
 from pdb import set_trace as br #For debugging I prefer the c style "break" nomenclature to "trace"
-import time as time_lib
+import time as time_lib # for diagnostices
 # needed for utf-encoding:
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -23,6 +23,7 @@ argslist=[\
 'cbar_domain',\
 'cbar_enabled',\
 'cbar_orientation',\
+'cbar_top',\
 'title',\
 'title_enabled',\
 'title_font',\
@@ -38,6 +39,7 @@ argslist=[\
 'elapsed_time_enabled',\
 'variable',\
 'zoom_value']
+
 #
 #Create type checkers:
 #
@@ -70,6 +72,7 @@ settings_parser.add_argument('-cbar_scale',type=str,default='lin',choices=['lin'
 settings_parser.add_argument('-bar_domain',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The domain of the color bar')
 settings_parser.add_argument('-cbar_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',nargs=1,default=True,help='enable or disable colorbar')
 settings_parser.add_argument('-cbar_orientation',type=str,choices=['vertical','horizontal'],metavar='{{\'vertical\'},\'horizontal\'}',default='vertical',help='set the colorbar to orientation')
+settings_parser.add_argument('-cbar_top',type=check_bool,choices=[True,False],metavar='{True,{False}}',nargs=1,default=False,help='Flip colorbar to the negative side of whichever axis it sits on')
 settings_parser.add_argument('-title',type=str,metavar='{{AttributeName},str}',help='Define the plot title that goes above the plot',default='AttributeName')
 settings_parser.add_argument('-title_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='enable or disable the title that goes above the plot')
 settings_parser.add_argument('-title_font',type=str,metavar='str',help='choose the font of the plot title')
@@ -188,7 +191,7 @@ plt.margins(enable=False,axis='both')
 ax.format_coord = format_coord
 
 # fig.subplots_adjust(bottom=0)
-# Define the colors that make up the "hot desaturated" in VisIt
+# Define the colors that make up the "hot desaturated" in VisIt:
 cdict = {'red':((.000, 0.263, 0.263),
 			(0.143, 0.000, 0.000),
 			(0.286, 0.000, 0.000),
@@ -228,7 +231,7 @@ plt.colorbar(test,ax=ax,shrink=[.98,.68][settings.cbar_orientation=='vertical'],
 plt.savefig('test.png',format='png',bbox_inches='tight') 
 qprint('time elapsed:	'+str(time_lib.time()-start_time))
 del start_time
-from subprocess import call
-call(['qlmanage -p test.png &> /dev/null'],shell=True)
+from subprocess import call # for on-the-fly lightning fast image viewing on mac
+call(['qlmanage -p test.png &> /dev/null'],shell=True) # for on-the-fly lightning fast image viewing on mac
 # plt.show()
 # Comment and uncomment the next line to show and interactive plot after optionally saving the image (above):
