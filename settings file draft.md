@@ -5,6 +5,7 @@ cmap ([hot_desaturated],viridis,inferno,plasma,magma,Blues,BuGn,BuPu,GnBu,Greens
 cbar_scale ([lin],log)
 cbar_domain (int min, [auto]) (int max,[auto])
 cbar_enabled ([True],False)
+cbar_vertical ([True],False)
 
 title ([portion of file name], string)
 title_enabled ([True],False)
@@ -29,4 +30,4 @@ elapsed_time_enabled ([True ue],False)
 output_image_filename ([prefix_#####.png],str)
 output_directory?
 tick label scaling (bool)
-quantity
+variable
