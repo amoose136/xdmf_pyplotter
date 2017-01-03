@@ -5,8 +5,7 @@ cmap ([hot_desaturated],viridis,inferno,plasma,magma,Blues,BuGn,BuPu,GnBu,Greens
 cbar_scale ([lin],log)
 cbar_domain (int min, [auto]) (int max,[auto])
 cbar_enabled ([True],False)
-cbar_vertical ([True],False)
-
+cbar_location (['right'],'left','top','bottom')
 title ([portion of file name], string)
 title_enabled ([True],False)
 text_font (TBD)

@@ -4,16 +4,19 @@ from __future__ import print_function # Anticipating the PY3 apocalypse in 2020
 import sys, argparse, csv, re # For basic file IO stuff, argument parsing, config file reading, text substitution/ regex
 from pdb import set_trace as br #For debugging I prefer the c style "break" nomenclature to "trace"
 import time as time_lib # for diagnostices
-# needed for utf-encoding:
-reload(sys)
-sys.setdefaultencoding('utf8')
+import six
+# needed for utf-encoding on python 2:
+if six.PY2:
+	reload(sys)
+	sys.setdefaultencoding('utf8')
 # for io diagnostics:
 start_time = time_lib.time()
 # construct main parser:
 parser = argparse.ArgumentParser(description="Plot variables from XDMF with matplotlib")
-parser.add_argument('-quiet','-q',dest='quiet',action='store_const',const=True, help='only display error messages (default full debug messages)')
-parser.add_argument('-settings','-s',dest='settingsfile',required=True)
-parser.add_argument('-threads','-t',dest='threads')
+parser.add_argument('--quiet','-q',dest='quiet',action='store_const',const=True, help='only display error messages (default full debug messages)')
+parser.add_argument('--settings','-s',dest='settingsfile',required=True)
+parser.add_argument('--threads','-t',dest='threads')
+parser.add_argument('files',metavar='frame_###.xmf',nargs='+')
 # create subparser for all the plot settings:
 settings_parser=argparse.ArgumentParser(description="Take input settings for matplotlib",prog='./plot.py file[01..N].xmf -s plot.config where plot.config contains:')
 # Create list of arguments that appear in the argparser so it knows to add a '-' in front if there isn't one:
@@ -22,8 +25,7 @@ argslist=[\
 'cbar_scale',\
 'cbar_domain',\
 'cbar_enabled',\
-'cbar_orientation',\
-'cbar_top',\
+'cbar_location',\
 'title',\
 'title_enabled',\
 'title_font',\
@@ -71,8 +73,7 @@ settings_parser.add_argument('-cmap',default='hot_desaturated',help='Colormap to
 settings_parser.add_argument('-cbar_scale',type=str,default='lin',choices=['lin','log'],metavar="{{lin},log}",help='Linear or log scale colormap')
 settings_parser.add_argument('-bar_domain',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The domain of the color bar')
 settings_parser.add_argument('-cbar_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',nargs=1,default=True,help='enable or disable colorbar')
-settings_parser.add_argument('-cbar_orientation',type=str,choices=['vertical','horizontal'],metavar='{{\'vertical\'},\'horizontal\'}',default='vertical',help='set the colorbar to orientation')
-settings_parser.add_argument('-cbar_top',type=check_bool,choices=[True,False],metavar='{True,{False}}',nargs=1,default=False,help='Flip colorbar to the negative side of whichever axis it sits on')
+settings_parser.add_argument('-cbar_location',type=str,choices=['left','right','top','bottom'],metavar='{\'left\',{\'right\'},\'top\',\'bottom\'}',default='right',help='set the colorbar position')
 settings_parser.add_argument('-title',type=str,metavar='{{AttributeName},str}',help='Define the plot title that goes above the plot',default='AttributeName')
 settings_parser.add_argument('-title_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='enable or disable the title that goes above the plot')
 settings_parser.add_argument('-title_font',type=str,metavar='str',help='choose the font of the plot title')
@@ -112,7 +113,8 @@ try:
 	from Xdmf import *
 except:
 	eprint("Fatal Error: Xdmf python bindings not found")	
-	eprint("\tIf on Mac, try \"$brew install tdsmith/xdmf/xdmf --HEAD\"")
+	eprint("\tIf on Mac, try \"$brew install amoose136/xdmf/xdmf --HEAD\"")
+	eprint("\tThis should work for python2.x bindings but I have no guarantee for python3.x")
 	sys.exit()
 
 # Carefully import numpy
@@ -132,106 +134,116 @@ except:
 
 
 # Carefully import matplotlib
-import matplotlib
 try:
+	import matplotlib
 	import matplotlib.pyplot as plt
+	from matplotlib.colorbar import make_axes
 except:
 	eprint('Fatal Error: matplotlib.pyplot not found!')
 	sys.exit()
 
 # Library needed for custom "Candybar" colormap:
 from matplotlib.colors import LinearSegmentedColormap
+for file in args.files:
+	reader = XdmfReader.New()
+	dom = XdmfReader.read(reader,file)
 
-reader = XdmfReader.New()
-dom = XdmfReader.read(reader,'../chimera/2d/chimera_00774_grid_1_01.xmf')
-# br()
-# dom = XdmfReader.read(reader,'../chimera/3d/2D_chimera_step-00400.xmf')
+	# dom = XdmfReader.read(reader,'../chimera/3d/2D_chimera_step-00400.xmf')
 
-grid = dom.getRectilinearGrid(0)
-time=grid.getTime().getValue()
+	grid = dom.getRectilinearGrid(0)
+	time=grid.getTime().getValue()
 
-grid.getCoordinates(0).read()
-zeniths=np.array([float(piece) for piece in grid.getCoordinates(0).getValuesString().split()]) #terrible fallback to get data but nothing else works for coordinates it seems
-grid.getCoordinates(1).read()
-azimuths=np.array([float(piece) for piece in grid.getCoordinates(1).getValuesString().split()])
-rad, phi = np.meshgrid(zeniths, azimuths)
-x,y=pol2cart(rad,phi)
-grid.getAttribute('Entropy').read()
-entropy=np.frombuffer(grid.getAttribute('Entropy').getBuffer()).reshape((rad.shape[0]-1,rad.shape[1]-1))
-# 	return 'Theta=%1.4f, r=%9.4g, %s=%1.4f'%(x, y, 'entropy',entropy[max(0,np.where(azimuths<x)[0][-1]-1),max(0,np.where(zeniths<y)[0][-1]-1)])
-fig = plt.figure()
-fig.set_size_inches(12.1, 7.2)
-ax = fig.add_subplot(111)
+	grid.getCoordinates(0).read()
+	zeniths=np.array([float(piece) for piece in grid.getCoordinates(0).getValuesString().split()]) #terrible fallback to get data but nothing else works for coordinates it seems
+	grid.getCoordinates(1).read()
+	azimuths=np.array([float(piece) for piece in grid.getCoordinates(1).getValuesString().split()])
+	rad, phi = np.meshgrid(zeniths, azimuths)
+	x,y=pol2cart(rad,phi)
+	grid.getAttribute('Entropy').read()
+	entropy=np.frombuffer(grid.getAttribute('Entropy').getBuffer()).reshape((rad.shape[0]-1,rad.shape[1]-1))
+	# 	return 'Theta=%1.4f, r=%9.4g, %s=%1.4f'%(x, y, 'entropy',entropy[max(0,np.where(azimuths<x)[0][-1]-1),max(0,np.where(zeniths<y)[0][-1]-1)])
+	fig = plt.figure()
+	fig.set_size_inches(12.1, 7.2)
+	ax = fig.add_subplot(111)
+	ax.set_ymargin(.2)
+	settings.title=re.sub(r'\\variable',settings.variable.lower(),settings.title)
+	settings.title=re.sub(r'\\Variable',settings.variable.title(),settings.title)
+	ax.set_title(settings.title)
+	ax.set_xlabel(settings.x_range_title)
+	ax.set_ylabel(settings.y_range_title)
 
-ax.set_title(settings.title,y=1.05)
-ax.set_xlabel(settings.x_range_title)
-ax.set_ylabel(settings.y_range_title)
+	# # Setup mouse-over string to interrogate data interactively when in polar coordinates
+	# def format_coord(x, y):
 
-# # Setup mouse-over string to interrogate data interactively when in polar coordinates
-# def format_coord(x, y):
+	# Setup mouse-over string to interrogate data interactively when in cartesian coordinates
+	def format_coord(x, y):
+		ia=np.where(azimuths<cart2pol(x,y)[1])[0][-1]
+		ib=np.where(zeniths<cart2pol(x,y)[0])[0][-1]
+		return 'Theta=%1.4f (rad), r=%9.4g, %s=%1.3f'%(cart2pol(x,y)[1], cart2pol(x,y)[0], 'entropy',entropy[ia,ib])
 
-# Setup mouse-over string to interrogate data interactively when in cartesian coordinates
-def format_coord(x, y):
-	ia=np.where(azimuths<cart2pol(x,y)[1])[0][-1]
-	ib=np.where(zeniths<cart2pol(x,y)[0])[0][-1]
-	return 'Theta=%1.4f (rad), r=%9.4g, %s=%1.3f'%(cart2pol(x,y)[1], cart2pol(x,y)[0], 'entropy',entropy[ia,ib])
+	# plt.axis([theta.min(), theta.max(), rad.min(), rad.max()/60])
+	#create a function to splice in manually specified values if need be
+	def detect_auto(defaults,value):
+		output=[]
+		for a,b in zip(defaults,value):
+			output.append([a,b][b!='auto'])
+		return output
+	zoomvalue=1./90
+	if settings.zoom_value and settings.zoom_value!='auto':
+		zoomvalue=settings.zoom_value
+	plt.axis(detect_auto([x.min()*zoomvalue, x.max()*zoomvalue, y.min(), y.max()*zoomvalue],settings.x_range_km+settings.y_range_km))
+	plt.margins(enable=False,axis='both')
+	ax.format_coord = format_coord
 
-# plt.axis([theta.min(), theta.max(), rad.min(), rad.max()/60])
-#create a function to splice in manually specified values if need be
-def detect_auto(defaults,value):
-	output=[]
-	for a,b in zip(defaults,value):
-		output.append([a,b][b!='auto'])
-	return output
-zoomvalue=1./90
-if settings.zoom_value and settings.zoom_value!='auto':
-	zoomvalue=settings.zoom_value
-plt.axis(detect_auto([x.min()*zoomvalue, x.max()*zoomvalue, y.min(), y.max()*zoomvalue],settings.x_range_km+settings.y_range_km))
-plt.margins(enable=False,axis='both')
-ax.format_coord = format_coord
+	# fig.subplots_adjust(bottom=0)
+	# Define the colors that make up the "hot desaturated" in VisIt:
+	cdict = {'red':((.000, 0.263, 0.263),
+				(0.143, 0.000, 0.000),
+				(0.286, 0.000, 0.000),
+				(0.429, 0.000, 0.000),
+				(0.571, 1.000, 1.000),
+				(0.714, 1.000, 1.000),
+				(0.857, 0.420, 0.420),
+				(1.000, 0.878, 0.878)),
 
-# fig.subplots_adjust(bottom=0)
-# Define the colors that make up the "hot desaturated" in VisIt:
-cdict = {'red':((.000, 0.263, 0.263),
-			(0.143, 0.000, 0.000),
-			(0.286, 0.000, 0.000),
-			(0.429, 0.000, 0.000),
-			(0.571, 1.000, 1.000),
-			(0.714, 1.000, 1.000),
-			(0.857, 0.420, 0.420),
-			(1.000, 0.878, 0.878)),
+			 'green':((.000, 0.263, 0.263),
+				(0.143, 0.000, 0.000),
+				(0.286, 1.000, 1.000),
+				(0.429, 0.498, 0.498),
+				(0.571, 1.000, 1.000),
+				(0.714, 0.376, 0.376),
+				(0.857, 0.000, 0.000),
+				(1.000, 0.298, 0.298)),
 
-		 'green':((.000, 0.263, 0.263),
-			(0.143, 0.000, 0.000),
-			(0.286, 1.000, 1.000),
-			(0.429, 0.498, 0.498),
-			(0.571, 1.000, 1.000),
-			(0.714, 0.376, 0.376),
-			(0.857, 0.000, 0.000),
-			(1.000, 0.298, 0.298)),
+			 'blue':((.000, 0.831, 0.831),
+				(0.143, 0.357, 0.357),
+				(0.286, 1.000, 1.000),
+				(0.429, 0.000, 0.000),
+				(0.571, 0.000, 0.000),
+				(0.714, 0.000, 0.000),
+				(0.857, 0.000, 0.000),
+				(1.000, 0.294, 0.294)),
+	}
 
-		 'blue':((.000, 0.831, 0.831),
-			(0.143, 0.357, 0.357),
-			(0.286, 1.000, 1.000),
-			(0.429, 0.000, 0.000),
-			(0.571, 0.000, 0.000),
-			(0.714, 0.000, 0.000),
-			(0.857, 0.000, 0.000),
-			(1.000, 0.294, 0.294)),
-}
+	plt.axes().set_aspect('equal', 'box')
+	# Create colorbar ("hot desaturated" in VisIt)
+	cbar_orientation=['vertical','horizontal'][settings.cbar_location in ['top','bottom']]
+	hot_desaturated=LinearSegmentedColormap('hot_desaturated',cdict,N=256,gamma=1.0)
+	cax, kw = make_axes(ax,location=settings.cbar_location,shrink=[.93,.68][cbar_orientation=='vertical'],pad=[.05,.01,.08][(cbar_orientation=='vertical') + (settings.cbar_location=='left')])# note that this last setting, pad, is done in a sneaky way. True + True = 2 in python. ¯\_(ツ)_/¯
+	test=ax.pcolormesh(x, y, entropy,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'])
+	plt.colorbar(test,cax=cax,orientation=cbar_orientation)
+	# cax.yaxis.set_ticks_position()
 
-plt.axes().set_aspect('equal', 'box')
-# Create colorbar ("hot desaturated" in VisIt)
-hot_desaturated=LinearSegmentedColormap('hot_desaturated',cdict,N=256,gamma=1.0)
-test=ax.pcolormesh(x, y, entropy,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'])
-plt.colorbar(test,ax=ax,shrink=[.98,.68][settings.cbar_orientation=='vertical'],pad=[.05,.01][settings.cbar_orientation=='vertical'],orientation=settings.cbar_orientation)
-# plt.colorbar(test,ax=ax,extend='max')
+	cax.xaxis.set_ticks_position('top')
+	# plt.colorbar(test,ax=cax,shrink=[.98,.68][settings.cbar_orientation=='vertical'],pad=[.05,.01][settings.cbar_orientation=='vertical'],orientation=settings.cbar_orientation)
 
-# Comment and uncomment the next line to save the image:
-plt.savefig('test.png',format='png',bbox_inches='tight') 
-qprint('time elapsed:	'+str(time_lib.time()-start_time))
-del start_time
-from subprocess import call # for on-the-fly lightning fast image viewing on mac
-call(['qlmanage -p test.png &> /dev/null'],shell=True) # for on-the-fly lightning fast image viewing on mac
-# plt.show()
-# Comment and uncomment the next line to show and interactive plot after optionally saving the image (above):
+	# plt.colorbar(test,ax=ax,extend='max')
+
+	# Comment and uncomment the next line to save the image:
+	plt.savefig('test.png',format='png',bbox_inches='tight') 
+	qprint('time elapsed:	'+str(time_lib.time()-start_time))
+	del start_time
+	from subprocess import call # for on-the-fly lightning fast image viewing on mac
+	call(['qlmanage -p test.png &> /dev/null'],shell=True) # for on-the-fly lightning fast image viewing on mac
+	# plt.show()
+	# Comment and uncomment the next line to show and interactive plot after optionally saving the image (above):
