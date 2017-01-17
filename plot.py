@@ -216,6 +216,7 @@ for file in args.files:
 	# def check_valid_variable():
 	# 	return
 	br()
+	# (?<=abundance\/)\w\w? A capturing group for finding the He in /
 	variable=grid.getAttribute('Entropy')
 	variable.read()
 	variable=np.frombuffer(variable.getBuffer()).reshape((rad.shape[0]-1,rad.shape[1]-1))
