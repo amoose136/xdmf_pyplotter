@@ -195,10 +195,11 @@ for file in args.files:
 		sys.exit()
 	if re.search('.*\/(?!.+\/)',file):
 		file_directory = re.search('.*\/(?!.+\/)',file).group()
-	if re.search('.+\/(?!.+\/.+)',settings.variable):
-		h5varpath=re.search('.+\/(?!.+\/.+)',settings.variable).group()
-	if re.search('(?<=abundance/).+',settings.variable.lower()):
-		settings.variable=re.search('(?<=abundance/).+',settings.variable.lower()).group().capitalize()
+	if re.search('((?<=abundance/)\w+)/(\w+)',settings.variable.lower()):
+		match=re.search('((?<=abundance/)\w+)/(\w+)',settings.variable.lower())
+		varname=match.group(1)
+		gridname='Abundance/'+match.group(2)
+
 	# elif:
 
 	image_name = re.search('(?!.*\/).*',file).group()[:-4]+'_'+re.search('(?!.+\/.+)(?!\/).+',settings.variable).group().lower()+'.'+settings.image_format
