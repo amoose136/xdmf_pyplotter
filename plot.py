@@ -195,31 +195,50 @@ for file in args.files:
 		sys.exit()
 	if re.search('.*\/(?!.+\/)',file):
 		file_directory = re.search('.*\/(?!.+\/)',file).group()
-	if re.search('((?<=abundance/)\w+)/(\w+)',settings.variable.lower()):
-		match=re.search('((?<=abundance/)\w+)/(\w+)',settings.variable.lower())
-		varname=match.group(1)
-		gridname='Abundance/'+match.group(2)
-
-	# elif:
-
+	if re.search('(?<=abundance/)(\w{1,2})/(\w+)',settings.variable.lower()):
+		match=re.search('(?<=abundance/)(\w{1,2})/(\w+)',settings.variable.lower())
+		varname=match.group(2)
+		TrueVarname=match.group(1).title()+varname
+		gridname='Abundance/'+match.group(1).title()
+		TrueGridname='Abundance'
+	elif re.search('(?<=abundance/)(\w{1,2})(\d+)',settings.variable.lower()): # this is needed to maintain compatibility with xdmf formatted for visit (not using collections like it should)
+		match=re.search('(?<=abundance/)(\w{1,2})(\d+)',settings.variable.lower())
+		gridname='Abundance/'+match.group(1).title()
+		varname=match.group(2)
+		TrueVarname=match.group(1).title()+varname
+		TrueGridname='Abundance'
+	else:
+		match=settings.variable.split('/')
+		gridname=match[0]
+		varname=match[1]
+		TrueVarname=varname
+		TrueGridname=gridname
+	del match
+	br()
 	image_name = re.search('(?!.*\/).*',file).group()[:-4]+'_'+re.search('(?!.+\/.+)(?!\/).+',settings.variable).group().lower()+'.'+settings.image_format
-	
 	reader = XdmfReader.New()
 	dom = XdmfReader.read(reader,file)
-	grid = dom.getRectilinearGrid(0)
-	grid.getCoordinates(0).read()
-	zeniths=np.array([float(piece) for piece in grid.getCoordinates(0).getValuesString().split()]) #terrible fallback to get data but nothing else works for coordinates it seems
-	grid.getCoordinates(1).read()
-	azimuths=np.array([float(piece) for piece in grid.getCoordinates(1).getValuesString().split()])
+	grid = dom.getRectilinearGrid(gridname)
+	try:
+		grid.getCoordinates(0).read()
+		zeniths=np.array([float(piece) for piece in grid.getCoordinates(0).getValuesString().split()]) #terrible fallback to get data but nothing else works for coordinates it seems
+		grid.getCoordinates(1).read()
+		azimuths=np.array([float(piece) for piece in grid.getCoordinates(1).getValuesString().split()])
+	except AttributeError:
+		eprint('Error: Invalid grid')
+		eprint('\t'+settings.variable+' provided a grid not found in the XDMF')
+		eprint('\tGrid tried was: '+gridname)
+		sys.exit()
 	rad, phi = np.meshgrid(zeniths, azimuths)
 	x,y=pol2cart(rad,phi)
-
-	# def check_valid_variable():
-	# 	return
-	br()
-	# (?<=abundance\/)\w\w? A capturing group for finding the He in /
-	variable=grid.getAttribute('Entropy')
-	variable.read()
+	try:
+		variable=grid.getAttribute(varname)
+		variable.read()
+	except AttributeError:
+		eprint("Error: Invalid attribute")
+		eprint("\t"+settings.variable+" not found in "+file)
+		eprint("\tPath looked for was :"+gridname+"/"+varname)
+		sys.exit()
 	variable=np.frombuffer(variable.getBuffer()).reshape((rad.shape[0]-1,rad.shape[1]-1))
 	# entropy=grid.getAttribute('Entropy')
 	# entropyr=entropy.getReference()
@@ -297,8 +316,11 @@ for file in args.files:
 	pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'])
 	
 	for atr in ['title','x_range_label','y_range_label']:
-		settings.__setattr__(atr,re.sub(r'\\variable',settings.variable.lower(),settings.__getattribute__(atr)))
-		settings.__setattr__(atr,re.sub(r'\\Variable',settings.variable.title(),settings.__getattribute__(atr)))
+		settings.__setattr__(atr,re.sub(r'\\var(?=[^i]|$)',TrueVarname,settings.__getattribute__(atr)))
+		settings.__setattr__(atr,re.sub(r'\\variable',TrueVarname.lower(),settings.__getattribute__(atr)))
+		settings.__setattr__(atr,re.sub(r'\\Variable',TrueVarname.title(),settings.__getattribute__(atr)))
+		settings.__setattr__(atr,re.sub(r'\\grid',TrueGridname,settings.__getattribute__(atr)))
+		settings.__setattr__(atr,re.sub(r'\\path',TrueGridname+'/'+TrueVarname,settings.__getattribute__(atr)))
 	title=sp.set_title(settings.title,fontsize=settings.title_font_size)
 	xlabel=sp.set_xlabel(settings.x_range_label,fontsize=settings.label_font_size)
 	ylabel=sp.set_ylabel(settings.y_range_label,fontsize=settings.label_font_size)
