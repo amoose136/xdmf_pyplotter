@@ -195,17 +195,11 @@ for file in args.files:
 		sys.exit()
 	if re.search('.*\/(?!.+\/)',file):
 		file_directory = re.search('.*\/(?!.+\/)',file).group()
-	if re.search('(?<=abundance/)(\w{1,2})/(\w+)',settings.variable.lower()):
-		match=re.search('(?<=abundance/)(\w{1,2})/(\w+)',settings.variable.lower())
+	if re.search('(?<=abundance/)([a-z]{1,2})/?(\d+)',settings.variable.lower()):
+		match=re.search('(?<=abundance/)([a-z]{1,2})/?(\d+)',settings.variable.lower())
 		varname=match.group(2)
 		TrueVarname=match.group(1).title()+varname
 		gridname='Abundance/'+match.group(1).title()
-		TrueGridname='Abundance'
-	elif re.search('(?<=abundance/)(\w{1,2})(\d+)',settings.variable.lower()): # this is needed to maintain compatibility with xdmf formatted for visit (not using collections like it should)
-		match=re.search('(?<=abundance/)(\w{1,2})(\d+)',settings.variable.lower())
-		gridname='Abundance/'+match.group(1).title()
-		varname=match.group(2)
-		TrueVarname=match.group(1).title()+varname
 		TrueGridname='Abundance'
 	else:
 		match=settings.variable.split('/')
@@ -214,7 +208,6 @@ for file in args.files:
 		TrueVarname=varname
 		TrueGridname=gridname
 	del match
-	br()
 	image_name = re.search('(?!.*\/).*',file).group()[:-4]+'_'+re.search('(?!.+\/.+)(?!\/).+',settings.variable).group().lower()+'.'+settings.image_format
 	reader = XdmfReader.New()
 	dom = XdmfReader.read(reader,file)
