@@ -140,7 +140,33 @@ except:
 	eprint("\tIf on Mac, try \"$brew install amoose136/xdmf/xdmf --HEAD\"")
 	eprint("\tThis should work for python2.x bindings but I have no guarantee for python3.x yet")
 	sys.exit()
-
+#Robustly import an xml writer/parser
+try:
+	from lxml import etree as et
+	qprint("Running with lxml.etree")
+except ImportError:
+	try:
+		# Python 2.5
+		import xml.etree.cElementTree as et
+		import xml.dom.minidom as md
+		qprint("Running with cElementTree on Python 2.5+")
+	except ImportError:
+		try:
+		# Python 2.5
+			import xml.etree.ElementTree as et
+			qprint("Running with ElementTree on Python 2.5+")
+		except ImportError:
+			try:
+				# normal cElementTree install
+				import cElementTree as et
+				qprint("running with cElementTree")
+			except ImportError:
+				try:
+					# normal ElementTree install
+					import elementtree.ElementTree as et
+					qprint("running with ElementTree")
+				except ImportError:
+					eprint("Fatal error: Failed to import ElementTree from any known place. XML writing is impossible. ")
 # Carefully import numpy
 try:
 	import numpy as np
@@ -152,14 +178,14 @@ try:
 		rho = np.sqrt(x**2 + y**2)
 		phi = np.arctan2(y, x)
 		return(rho, phi)
-except:
+except ImportError:
 	eprint('Fatal Error: numpy not found!')
 	sys.exit()
 
 # Carefully import matplotlib
 try:
-	import matplotlib
-	matplotlib.use('AGG')#change backend
+	import matplotlib as mpl
+	mpl.use('AGG')#change backend
 	import matplotlib.pyplot as plt
 	from matplotlib.colorbar import make_axes
 	from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -212,6 +238,7 @@ for file in args.files:
 	reader = XdmfReader.New()
 	dom = XdmfReader.read(reader,file)
 	grid = dom.getRectilinearGrid(gridname)
+	# br()
 	try:
 		grid.getCoordinates(0).read()
 		zeniths=np.array([float(piece) for piece in grid.getCoordinates(0).getValuesString().split()]) #terrible fallback to get data but nothing else works for coordinates it seems
@@ -232,6 +259,9 @@ for file in args.files:
 		eprint("\t"+settings.variable+" not found in "+file)
 		eprint("\tPath looked for was :"+gridname+"/"+varname)
 		sys.exit()
+	xml=et.parse(file)
+	datapath=xml.getroot()[0].find("*[@Name='"+gridname+"']/*[@Name='"+varname+"']/").getchildren()[1].text
+	br()
 	variable=np.frombuffer(variable.getBuffer()).reshape((rad.shape[0]-1,rad.shape[1]-1))
 	# entropy=grid.getAttribute('Entropy')
 	# entropyr=entropy.getReference()
