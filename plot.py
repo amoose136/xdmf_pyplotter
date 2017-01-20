@@ -136,12 +136,14 @@ def qprint(*arg,**kwargs):
 # Define settings
 if args.settingsfile and args.settingsfile!='':
 	settingsargs=[]
-	for supper_arg in csv.reader(open(args.settingsfile).read().split('\n'),delimiter=' ',quotechar='"',escapechar='\\'):
-		for arg in supper_arg:
+	for super_arg in csv.reader(open(args.settingsfile).read().split('\n'),delimiter=' ',quotechar='"',escapechar='\\'):
+		if super_arg[0][0]+super_arg[0][1]=='//':
+			break
+		for arg in super_arg:
 			# account for the required '-' needed for argparse
 			if arg in argslist:
 				settingsargs.append('-'+arg) 
-			else: 
+			else:
 				settingsargs.append(arg)
 	settings=settings_parser.parse_args(settingsargs)
 # Carefully import xdmf
@@ -235,7 +237,7 @@ for file in args.files:
 		TrueVarname=varname
 		TrueGridname=gridname
 	del match
-	image_name = re.search('(?!.*\/).*',file).group()[:-4]+'_'+re.search('(?!.+\/.+)(?!\/).+',settings.variable).group().lower()+'.'+settings.image_format
+	image_name = re.search('(?!.+\/.+)(?!\/).+',TrueVarname).group().title()+'_'+re.search('(?!.*\/).*',file).group()[:-4]+'.'+settings.image_format
 	grid = dom.getRectilinearGrid(gridname)
 	coordinates=[]
 	def get_coordinates():
@@ -426,7 +428,7 @@ for file in args.files:
 	else:
 		cax.yaxis.set_ticks_position(settings.cbar_location)
 
-	fig.suptitle('this is the figure title', fontsize=12,)
+	# fig.suptitle('this is the figure title', fontsize=12,)
 	plt.tight_layout()
 	# br()
 	# plt.figtext(1,0,'Elapsed time:'+str(grid.getTime().getValue()),horizontalalignment='center',transform=ax.transAxes,bbox=dict(facecolor='red', alpha=0.5))
