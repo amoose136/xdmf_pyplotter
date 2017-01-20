@@ -5,6 +5,7 @@ import sys, argparse, csv, re # For basic file IO stuff, argument parsing, confi
 from pdb import set_trace as br #For debugging I prefer the c style "break" nomenclature to "trace"
 import time as time_lib # for diagnostices
 import six
+
 # needed for utf-encoding on python 2:
 if six.PY2:
 	reload(sys)
@@ -50,12 +51,23 @@ argslist=[\
 'label_font_size',\
 'title_font_size',\
 ]
+# Carefully import h5py
 try:
-	# Library needed for custom "Candybar" colormap:
+	import h5py
+except ImportError:
+	eprint('Fatal Error: h5py not found! (used for reading heavy data)')
+	sys.exit()
+# Carefully import matplotlib
+try:
+	import matplotlib as mpl
+	mpl.use('AGG')#change backend
+	import matplotlib.pyplot as plt
+	from matplotlib.colorbar import make_axes
+	from mpl_toolkits.axes_grid1 import make_axes_locatable
 	from matplotlib.colors import LinearSegmentedColormap,is_color_like
-except ImportError():
-	eprint('matplotlib not found')
-#
+except ImportError:
+	eprint('Fatal Error: matplotlib or parts of it not found!')
+	sys.exit()
 #Create type checkers:
 #
 def check_bool(value):
@@ -179,29 +191,18 @@ try:
 		phi = np.arctan2(y, x)
 		return(rho, phi)
 except ImportError:
-	eprint('Fatal Error: numpy not found!')
-	sys.exit()
-
-# Carefully import matplotlib
-try:
-	import matplotlib as mpl
-	mpl.use('AGG')#change backend
-	import matplotlib.pyplot as plt
-	from matplotlib.colorbar import make_axes
-	from mpl_toolkits.axes_grid1 import make_axes_locatable
-except ImportError:
-	eprint('Fatal Error: matplotlib or parts of it not found!')
+	eprint('Fatal Error: numpy not found! (used to do math faster)')
 	sys.exit()
 
 def valid_grid_names():
 	grids=[]
-	for i in range(0,dom.getNumberRectilinearGrids()): 
-		grids.append(dom.getRectilinearGrid(i).getName())
+	for i in domain.getchildren(): 
+		grids.append(i.get('Name'))
 	return grids
 def valid_variables(gridname):
 	variables=[]
-	for i in range(0,dom.getRectilinearGrid(gridname).getNumberAttributes()):
-		variables.append(dom.getRectilinearGrid(gridname).getAttribute(i).getName())
+	for attribute in domain.findall("*[@Name='"+gridname+"']/Attribute"):
+		variables.append(attribute.attrib['Name'])
 	return variables
 def tree():
 	qprint('Found valid scalars:')
@@ -212,10 +213,10 @@ def tree():
 			qprint(['\n\t',''][i!=0 or i==len(variables)]+variable+(','+'\n\t'*((i+1)%5==0))*(i!=len(variables)-1),end=' ')
 	qprint()
 
-
 for file in args.files:
 	reader = XdmfReader.New()
 	dom = XdmfReader.read(reader,file)
+	domain=et.parse(file).getroot()[0]
 	if args.tree:
 		tree()
 		sys.exit()
@@ -235,15 +236,58 @@ for file in args.files:
 		TrueGridname=gridname
 	del match
 	image_name = re.search('(?!.*\/).*',file).group()[:-4]+'_'+re.search('(?!.+\/.+)(?!\/).+',settings.variable).group().lower()+'.'+settings.image_format
-	reader = XdmfReader.New()
-	dom = XdmfReader.read(reader,file)
 	grid = dom.getRectilinearGrid(gridname)
-	# br()
+	coordinates=[]
+	def get_coordinates():
+		expected_dim=grid2.find('Topology').get('NumberOfElements').split()
+		try:
+			assert len(expected_dim)==int(grid2.find('Topology').get('TopologyType')[0])
+		except:
+			eprint('Error: Dimensions specified in topology tag ('+int(grid2.find('Topology').get('TopologyType')[0])+') do not match typology type ('+grid2.find('Topology').get('TopologyType')+')')
+			sys.exit()
+		for i,coord in enumerate(grid2.find('Geometry').findall('DataItem')):
+			if coord.get('Dimensions'):
+				try:
+					assert expected_dim[len(expected_dim)-1-i] == coord.get('Dimensions')
+				except: 
+					eprint('Error: Dimensions specified in geometry\'s DataItem do not match those specified in the typology tag')
+					sys.exit()
+			if coord.attrib['ItemType']=='Function':
+				divisor=int(re.search('(?<=\$\d\/)\d+',coord.attrib['Function']).group())
+				qprint('This element is a function')
+				sub=coord.getchildren()[0]
+			else:
+				sub=coord
+			if sub.get('Dimensions'):
+				try:
+					assert expected_dim[len(expected_dim)-1-i] == sub.get('Dimensions')
+				except: 
+					eprint('Error: Dimensions specified in geometry\'s '+[str(i+1)+'th',['1st','2nd','3rd'][i%3]][i<=2]+' hyperslab tag\'s Dimension attribute do not match those specified in the typology tag')
+					sys.exit()
+			ssc={'start':0,'stride':0,'count':0}
+			for j,k in enumerate(sub.getchildren()[0].text.split()):
+				ssc[['start','stride','count'][j]]=int(k)
+			try:
+				assert ssc['count']==int(expected_dim[len(expected_dim)-1-i])
+			except:
+				eprint('Error: Dimensions specified in geometry\'s '+[str(i+1)+'th',['1st','2nd','3rd'][i%3]][i<=2]+' hyperslab ('+sub.getchildren()[0].text+') do not match those specified in the typology tag')
+				sys.exit()
+			coord_dataitem=sub.getchildren()[1]
+			coordpath=coord_dataitem.text
+			if i==0:
+				relative_path=file_directory+coordpath.split(':')[0]
+				hf=h5py.File(relative_path,'r')
+			end=ssc['start']+ssc['count']*ssc['stride']
+			if coord.attrib['ItemType']=='Function':
+				coordinates.append(np.divide(hf[coordpath.split(':')[1]][ssc['start']:end:ssc['stride']],divisor))
+			else:
+				coordinates.append(hf[coordpath.split(':')[1]][ssc['start']:end:ssc['stride']])
+
 	try:
-		grid.getCoordinates(0).read()
-		zeniths=np.array([float(piece) for piece in grid.getCoordinates(0).getValuesString().split()]) #terrible fallback to get data but nothing else works for coordinates it seems
-		grid.getCoordinates(1).read()
-		azimuths=np.array([float(piece) for piece in grid.getCoordinates(1).getValuesString().split()])
+		grid2 = domain.find('*[@Name="'+gridname+'"]')
+		get_coordinates()
+		zeniths=coordinates[0]
+		azimuths=coordinates[1]
 	except AttributeError:
 		eprint('Error: Invalid grid')
 		eprint('\t'+settings.variable+' provided a grid not found in the XDMF')
@@ -259,8 +303,7 @@ for file in args.files:
 		eprint("\t"+settings.variable+" not found in "+file)
 		eprint("\tPath looked for was :"+gridname+"/"+varname)
 		sys.exit()
-	xml=et.parse(file)
-	datapath=xml.getroot()[0].find("*[@Name='"+gridname+"']/*[@Name='"+varname+"']/").getchildren()[1].text
+	datapath=domain.find("*[@Name='"+gridname+"']/*[@Name='"+varname+"']/").getchildren()[1].text
 	br()
 	variable=np.frombuffer(variable.getBuffer()).reshape((rad.shape[0]-1,rad.shape[1]-1))
 	# entropy=grid.getAttribute('Entropy')
