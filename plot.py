@@ -254,7 +254,6 @@ for file in args.files:
 					sys.exit()
 			if coord.attrib['ItemType']=='Function':
 				divisor=int(re.search('(?<=\$\d\/)\d+',coord.attrib['Function']).group())
-				qprint('This element is a function')
 				sub=coord.getchildren()[0]
 			else:
 				sub=coord
@@ -264,7 +263,7 @@ for file in args.files:
 				except: 
 					eprint('Error: Dimensions specified in geometry\'s '+[str(i+1)+'th',['1st','2nd','3rd'][i%3]][i<=2]+' hyperslab tag\'s Dimension attribute do not match those specified in the typology tag')
 					sys.exit()
-			ssc={'start':0,'stride':0,'count':0}
+			ssc={'start':0,'stride':0,'count':0} #ssc = Start-Stride-Count
 			for j,k in enumerate(sub.getchildren()[0].text.split()):
 				ssc[['start','stride','count'][j]]=int(k)
 			try:
@@ -275,6 +274,8 @@ for file in args.files:
 			coord_dataitem=sub.getchildren()[1]
 			coordpath=coord_dataitem.text
 			if i==0:
+				global hf
+				global relative_path
 				relative_path=file_directory+coordpath.split(':')[0]
 				hf=h5py.File(relative_path,'r')
 			end=ssc['start']+ssc['count']*ssc['stride']
@@ -303,9 +304,33 @@ for file in args.files:
 		eprint("\t"+settings.variable+" not found in "+file)
 		eprint("\tPath looked for was :"+gridname+"/"+varname)
 		sys.exit()
-	datapath=domain.find("*[@Name='"+gridname+"']/*[@Name='"+varname+"']/").getchildren()[1].text
-	br()
-	variable=np.frombuffer(variable.getBuffer()).reshape((rad.shape[0]-1,rad.shape[1]-1))
+	attrib_elements=domain.find("*[@Name='"+gridname+"']/*[@Name='"+varname+"']/").getchildren()
+	datapath=attrib_elements[1].text.split(':')[1]
+	if attrib_elements[0].get('Dimensions'):
+		ssc=[]
+		arrsize=int(attrib_elements[0].get('Dimensions').split()[1])
+		for i in range(0,3):
+			a=[]
+			for j in range(0,arrsize):
+				a.append(int(attrib_elements[0].text.split()[j+arrsize*i]))
+			ssc.append(a)
+	else:
+		eprint('Error: Dimensions spec of dataitem in hyperslab invalid ')
+		sys.exit()
+	start=[]
+	stride=[]
+	end=[]
+	for i,j,k in zip(ssc[0],ssc[1],ssc[2]): 
+		start.append(i)
+		stride.append(j)
+		end.append(i+j*k)
+	if re.search('xn_c',datapath): # in case it's abundance stuff and needs an extra dimension specified for the xn_c grid
+		variable=hf[datapath][start[0]:end[0]:stride[0],start[1]:end[1]:stride[1],start[2]:end[2]:stride[2],start[3]:end[3]:stride[3]]
+	else:
+		variable=hf[datapath][start[0]:end[0]:stride[0],start[1]:end[1]:stride[1],start[2]:end[2]:stride[2]]
+	variable=variable.squeeze() #remove dimensions of size 1 so the result is a 2d array
+	# variable=np.frombuffer(variable.getBuffer()).reshape((rad.shape[0]-1,rad.shape[1]-1))
+	
 	# entropy=grid.getAttribute('Entropy')
 	# entropyr=entropy.getReference()
 	# variable=dom.getRectilinearGrid('Abundance/He').getAttribute('3')
