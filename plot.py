@@ -28,34 +28,6 @@ parser.add_argument('--threads','-t',dest='threads', help='number of threads to 
 parser.add_argument('files',metavar='frame_###.xmf',nargs='+',help='xdmf files to plot using the settings files')
 # create subparser for all the plot settings:
 settings_parser=argparse.ArgumentParser(description="Input plot settings for matplotlib to use",prog='plot.config parser')
-# Create list of arguments that appear in the argparser so it knows to add a '-' in front if there isn't sone:
-argslist=[\
-'cmap',\
-'cbar_scale',\
-'cbar_domain',\
-'cbar_enabled',\
-'cbar_location',\
-'cbar_width',\
-'title',\
-'title_enabled',\
-'title_font',\
-'smooth_zones',\
-'image_format',\
-'image_size',\
-'x_range_km',\
-'x_range_label',\
-'y_range_km',\
-'y_range_label',\
-'time_format',\
-'bounce_time_enabled',\
-'elapsed_time_enabled',\
-'variable',\
-'zoom_value',\
-'background_color',\
-'text_color',\
-'label_font_size',\
-'title_font_size',\
-]
 # Carefully import h5py
 try:
 	import h5py
@@ -133,7 +105,7 @@ settings_parser.add_argument('-time_format',type=str,metavar='{{seconds}, s, ms,
 settings_parser.add_argument('-bounce_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "time since bounce" display')
 settings_parser.add_argument('-elapsed_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "elapsed time" display')
 settings_parser.add_argument('-zoom_value',type=check_float,help='The zoom value (percentage of total range) to use if the x or y range is set to \'auto\'')
-print_help()
+print_help()#print_help does a hacky check that '-s help' or '--setting help' are not an argument before preceeding with normal argument parsing
 args=parser.parse_args()
 # define an error printing function for error reporting to terminal STD error IO stream
 def eprint(*arg, **kwargs):
@@ -148,6 +120,7 @@ if args.settingsfile and args.settingsfile in ['help','h']:
 	settings_parser.print_help()
 	sys.exit()
 # Define settings
+argslist=[i[1:] for i in settings_parser.__dict__['_option_string_actions'].keys()]
 if args.settingsfile and args.settingsfile!='':
 	settingsargs=[]
 	for super_arg in csv.reader(open(args.settingsfile).read().split('\n'),delimiter=' ',quotechar='"',escapechar='\\'):
@@ -160,6 +133,7 @@ if args.settingsfile and args.settingsfile!='':
 			else:
 				settingsargs.append(arg)
 	settings=settings_parser.parse_args(settingsargs)
+del argslist
 #Robustly import an xml writer/parser
 try:
 	from lxml import etree as et
@@ -281,7 +255,6 @@ for file in args.files:
 			if i==0:
 				global hf
 				global relative_path
-				br()
 				relative_path=file_directory+coordpath.split(':')[0]
 				hf=h5py.File(relative_path,'r')
 			end=ssc['start']+ssc['count']*ssc['stride']
