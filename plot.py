@@ -26,10 +26,8 @@ group.add_argument('--settings','-s',dest='settingsfile',help='A settings file f
 group.add_argument('--tree',help='Display layout of available data as found by xdmf',action='store_true',default=False)
 parser.add_argument('--threads','-t',dest='threads', help='number of threads to use for parallel operations')
 parser.add_argument('files',metavar='frame_###.xmf',nargs='+',help='xdmf files to plot using the settings files')
-# parser.add_argument('--files','-f',smetavar='frame_###.xmf',nargs='+',help='xdmf files to plot using the settings files')
 # create subparser for all the plot settings:
 settings_parser=argparse.ArgumentParser(description="Input plot settings for matplotlib to use",prog='plot.config parser')
-# parser.add_argument('files',metavar='frame_###.xmf',nargs='+',help='xdmf files to plot using the settings files')
 # Create list of arguments that appear in the argparser so it knows to add a '-' in front if there isn't sone:
 argslist=[\
 'cmap',\
@@ -107,7 +105,11 @@ def check_color(value):
 		raise argparse.ArgumentTypeError("%s is an invalid color value" % value)
 # create subparser arguments:
 settings_parser.add_argument('-variable',type=str,metavar='AttributeName',help='The attribute to plot like \'Entropy\', or \'Density\', etc. The name must match the XDMF attribute tags')
-settings_parser.add_argument('-cmap',default='hot_desaturated',help='Colormap to use for colorbar')#done
+# define a list of colormap names that matplotlib has, skipping over the reversed versions
+colormaps=[str(m) for m in plt.cm.datad if not m.endswith("_r")]
+colormaps.append('hot_desaturated') #because I add this colorbar below
+colormaps=sorted(colormaps, key=lambda s: s.lower())
+settings_parser.add_argument('-cmap',choices=colormaps,default='hot_desaturated',help='Colormap to use for colorbar')#done
 settings_parser.add_argument('-background_color',type=check_color,default='white',help='color to use as background')#done
 settings_parser.add_argument('-text_color',type=check_color,default='black',help='color to use for text and annotations')
 settings_parser.add_argument('-cbar_scale',type=str,default='lin',choices=['lin','log'],metavar="{{lin},log}",help='Linear or log scale colormap')
@@ -279,6 +281,7 @@ for file in args.files:
 			if i==0:
 				global hf
 				global relative_path
+				br()
 				relative_path=file_directory+coordpath.split(':')[0]
 				hf=h5py.File(relative_path,'r')
 			end=ssc['start']+ssc['count']*ssc['stride']
@@ -403,6 +406,10 @@ for file in args.files:
 
 	# Create colorbar ("hot desaturated" in VisIt)
 	hot_desaturated=LinearSegmentedColormap('hot_desaturated',cdict,N=256,gamma=1.0)
+	# Also create reversed version
+	cdict_r={'red':cdict['red'][::-1],'green':cdict['green'][::-1],'blue':cdict['blue'][::-1]}
+	hot_desaturated_r=LinearSegmentedColormap('hot_desaturated_r',cdict_r,N=256,gamma=1.0)
+	del cdict,cdict_r
 	if settings.cbar_scale=='log':
 		norm=LogNorm()
 	else:
