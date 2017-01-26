@@ -112,6 +112,7 @@ settings_parser.add_argument('-time_format',type=str,metavar='{{seconds}, s, ms,
 settings_parser.add_argument('-bounce_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "time since bounce" display')
 settings_parser.add_argument('-elapsed_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "elapsed time" display')
 settings_parser.add_argument('-zoom_value',type=check_float,help='The zoom value (percentage of total range) to use if the x or y range is set to \'auto\'')
+settings_parser.add_argument('-var_unit',type=str,default='auto',help='The unit to use for the plotted variable')
 print_help()#print_help does a hacky help flag overload by intercepting the sys.argv before the parser in order to also print the help for the settings file
 #if the help flag isn't there, continue and parse arguments as normal
 args=parser.parse_args()
@@ -131,12 +132,12 @@ if args.settingsfile and args.settingsfile in ['help','h']:
 	sys.exit()
 
 # Define parsed settings
-argslist=[i[1:] for i in settings_parser.__dict__['_option_string_actions'].keys()]
+argslist=[i[1:] for i in settings_parser.__dict__['_option_string_actions'].keys()] #generate list of valid arguments to prepend '-' to if it's not the first char
 if args.settingsfile and args.settingsfile!='':
 	settingsargs=[]
 	for super_arg in csv.reader(open(args.settingsfile).read().split('\n'),delimiter=' ',quotechar='"',escapechar='\\'):
-		if super_arg[0][0]+super_arg[0][1]=='//':
-			continue
+		if super_arg[0][0]+super_arg[0][1]=='//': #implement commenting
+			continue 
 		for arg in super_arg:
 			# account for the required '-' needed for argparse
 			if arg in argslist:
@@ -191,7 +192,7 @@ except ImportError:
 #create a function to list all valid grid names in the xdmf:
 def valid_grid_names():
 	gridnames=[]
-	for grd in domain.getchildren(): #grd for grid
+	for grd in domain.getchildren(): #grd is a grid element
 		gridnames.append(grd.get('Name'))
 	return gridnames
 
