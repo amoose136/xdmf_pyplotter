@@ -328,12 +328,19 @@ for file in args.files:
 		variable=hf[datapath][start[0]:end[0]:stride[0],start[1]:end[1]:stride[1],start[2]:end[2]:stride[2],start[3]:end[3]:stride[3]]
 	else:
 		variable=hf[datapath][start[0]:end[0]:stride[0],start[1]:end[1]:stride[1],start[2]:end[2]:stride[2]]
+	# br()
+	# variable=
 	variable=variable.squeeze() #remove dimensions of size 1 so the result is a 2d array
-	#Get Time:
+	# Get Time:
 	try:
 		time_bounce=float(domain.find("*[@Name='"+gridname+"']/Time").attrib['Value'])
 	except KeyError:
 		eprint('Static time not found!')
+	# Get Creation time
+	try:
+		ctime='Data from '+time_lib.ctime(float(domain.find('Information[@Name="ctime"]').attrib['Value']))
+	except KeyError:
+		eprint('Could not find ctime')
 	fun=domain.find("*[@Name='"+gridname+"']/Information[@Name='Time']").getchildren()[0]
 	if fun is not None:
 		try:
