@@ -19,6 +19,7 @@ parser.add_argument('--quiet','-q',dest='quiet',action='store_const',const=True,
 group.add_argument('--settings','-s',dest='settingsfile',help='A settings file full of plotting options')
 group.add_argument('--tree',help='Display layout of available data as found by xdmf',action='store_true',default=False)
 parser.add_argument('--threads','-t',dest='threads', help='number of threads to use for parallel operations')
+parser.add_argument('--directory','-d',dest='dir',help='The directory to output the graphs to.')
 parser.add_argument('files',metavar='frame_###.xmf',nargs='+',help='xdmf files to plot using the settings files')
 #define a help flag pseudo overloaded flag that also prints the help of the subparser for the settings file:
 def print_help():
@@ -451,12 +452,17 @@ for file in args.files:
 	# fig.suptitle('this is the figure title', fontsize=12,)
 	plt.tight_layout()
 	# plt.figtext(1,0,'Elapsed time:'+str(grid.getTime().getValue()),horizontalalignment='center',transform=ax.transAxes,bbox=dict(facecolor='red', alpha=0.5))
+	directory='.'
+	if args.dir:
+		directory=args.dir
+	if directory[-1]=='/':
+		directory=directory[:-1] # remove the last slash if it's there because we will add our own
 	# Comment and uncomment the next line to save the image:
-	plt.savefig(image_name,format=settings.image_format,facecolor=settings.background_color,orientation='landscape') 
+	plt.savefig(directory+'/'+image_name,format=settings.image_format,facecolor=settings.background_color,orientation='landscape') 
 	qprint('time elapsed:	'+str(time_lib.time()-start_time))
 	del start_time
 	# Comment and uncomment the next 2 lines to show the image on mac (must have saved the image first):
 	from subprocess import call # for on-the-fly lightning fast image viewing on mac
-	call(['qlmanage -p '+image_name+' &> /dev/null'],shell=True) # for on-the-fly lightning fast image viewing on mac
+	call(['qlmanage -p '+directory+'/'+image_name+' &> /dev/null'],shell=True) # for on-the-fly lightning fast image viewing on mac
 	# Comment and uncomment th next line to show the image on other platforms or if you haven't saved it first:
 	# plt.show() #Built in interactive viewer for non-macOS platforms. Slower.
