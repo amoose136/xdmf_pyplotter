@@ -18,11 +18,13 @@ parser = argparse.ArgumentParser(description="Plot variables from XDMF with matp
 group=parser.add_mutually_exclusive_group(required=True)
 parser.add_argument('--quiet','-q',dest='quiet',action='store_const',const=True, help='only display error messages (default full debug messages)')
 group.add_argument('--settings','-s',dest='settingsfile',help='A settings file full of plotting options')
-group.add_argument('--tree',help='Display layout of available data as found by xdmf',action='store_true',default=False)
+group.add_argument('--tree',help='Display layout of available data as found in XDMF and exit',action='store_true',default=False)
+group.add_argument('--vars',help='Display full paths to all valid variables and exit',action='store_true',default=False)
 parser.add_argument('--threads','-t',dest='threads', help='number of threads to use for parallel operations')
 parser.add_argument('--directory','-d',dest='dir',help='The directory to output the graphs to.')
 parser.add_argument('--debug',help='show result in window',action='store_true',default=False)
 parser.add_argument('files',metavar='frame_###.xmf',nargs='+',help='xdmf files to plot using the settings files')
+
 #define a help flag pseudo overloaded flag that also prints the help of the subparser for the settings file:
 def print_help():
 	if '-h' in sys.argv or '--help' in sys.argv:
@@ -33,9 +35,14 @@ def print_help():
 # create subparser for all the plot settings:
 settings_parser=argparse.ArgumentParser(description="Input plot settings for matplotlib to use",prog='plot.config parser')
 
-#Define an error printing function for error reporting to terminal STD error IO stream
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+# define an error printing function for error reporting to terminal STD error IO stream
+def eprint(*arg, **kwargs):
+	print(*arg, file=sys.stderr, **kwargs)
+
+#define a standard printing function that only functions if there is no silence flag on script invocation
+def qprint(*arg,**kwargs):
+	if not args.quiet:
+		print(*arg,**kwargs)
 
 # import h5py with checking
 try:
@@ -127,15 +134,6 @@ print_help()#print_help does a hacky help flag overload by intercepting the sys.
 #if the help flag isn't there, continue and parse arguments as normal
 args=parser.parse_args()
 
-# define an error printing function for error reporting to terminal STD error IO stream
-def eprint(*arg, **kwargs):
-	print(*arg, file=sys.stderr, **kwargs)
-
-#define a standard printing function that only functions if there is no silence flag on script invocation
-def qprint(*arg,**kwargs):
-	if not args.quiet:
-		print(*arg,**kwargs)
-
 #display help for just the config parser if "help" or "h" appears after -s or --settings
 if args.settingsfile and args.settingsfile in ['help','h']:
 	settings_parser.print_help()
@@ -157,6 +155,8 @@ if args.settingsfile and args.settingsfile!='':
 	settings=settings_parser.parse_args(settingsargs)
 del argslist
 
+if args.tree or args.vars:
+	args.quiet=True
 #Robustly import an xml writer/parser for parseing the xdmf tree
 try:
 	from lxml import etree as et
@@ -218,13 +218,19 @@ def valid_variables(gridname):
 
 #create a function to list all valid scalars from the currently parsed xdmf tree
 def tree():
-	qprint('Found valid scalars:')
+	print('Found valid scalars:')
 	for grid in valid_grid_names():
-		qprint(grid,end=':')
+		print(grid,end=':')
 		variables=valid_variables(grid)
 		for i,variable in enumerate(variables):
-			qprint(['\n\t  ',''][i!=0 or i==len(variables)]+variable+(', '+'\n\t  '*((i+1)%5==0))*(i!=len(variables)-1),end='')
-		qprint()
+			print(['\n\t  ',''][i!=0 or i==len(variables)]+variable+(', '+'\n\t  '*((i+1)%5==0))*(i!=len(variables)-1),end='')
+		print()
+
+# function to list full path to all valid scalars
+def list_vars():
+	for grid in valid_grid_names():
+		for var in valid_variables(grid):
+			print(grid+'/'+var)
 
 for file in args.files:
 	domain=et.parse(file).getroot()[0]
@@ -232,7 +238,9 @@ for file in args.files:
 	if args.tree:
 		tree()
 		sys.exit() #only does the first file for sanity sake
-
+	if args.vars:
+		list_vars()
+		sys.exit()
 	file_directory=''
 	if re.search('.*\/(?!.+\/)',file):
 		file_directory = re.search('.*\/(?!.+\/)',file).group()
