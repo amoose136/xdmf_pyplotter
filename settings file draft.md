@@ -25,7 +25,7 @@ y_range_text_rotated (True,[False])
 
 time_format ([seconds], s, ms, milliseconds)
 bounce_time_enabled ([True],False)
-elapsed_time_enabled ([True ue],False)
+elapsed_time_enabled ([True],False)
 output_image_filename ([prefix_#####.png],str)
 output_directory?
 tick label scaling (bool)

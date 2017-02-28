@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 from __future__ import print_function # Anticipating the PY3 apocalypse in 2020
-import sys, argparse, csv, re # For basic file IO stuff, argument parsing, config file reading, text substitution/ regex
+import sys, argparse, csv, re, platform # For basic file IO stuff, argument parsing, config file reading, text substitution/ regex, OS identification
 from pdb import set_trace as br #For debugging I prefer the c style "break" nomenclature to "trace"
 import time as time_lib # for diagnostices
 import six
+import traceback
 
 # needed for utf-encoding on python 2:
 if six.PY2:
@@ -20,6 +21,7 @@ group.add_argument('--settings','-s',dest='settingsfile',help='A settings file f
 group.add_argument('--tree',help='Display layout of available data as found by xdmf',action='store_true',default=False)
 parser.add_argument('--threads','-t',dest='threads', help='number of threads to use for parallel operations')
 parser.add_argument('--directory','-d',dest='dir',help='The directory to output the graphs to.')
+parser.add_argument('--debug',help='show result in window',action='store_true',default=False)
 parser.add_argument('files',metavar='frame_###.xmf',nargs='+',help='xdmf files to plot using the settings files')
 #define a help flag pseudo overloaded flag that also prints the help of the subparser for the settings file:
 def print_help():
@@ -31,14 +33,19 @@ def print_help():
 # create subparser for all the plot settings:
 settings_parser=argparse.ArgumentParser(description="Input plot settings for matplotlib to use",prog='plot.config parser')
 
-# Carefully import h5py
+#Define an error printing function for error reporting to terminal STD error IO stream
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+# import h5py with checking
 try:
 	import h5py
-except ImportError:
-	eprint('Fatal Error: h5py not found! (used for reading heavy data)')
+except Exception as e:
+	eprint('Fatal Error: H5PY not found! (used for reading heavy data)')
+	traceback.print_exception(type(e),e,sys.exc_info()[2])
 	sys.exit()
 
-# Carefully import matplotlib
+# import matplotlib with checking
 try:
 	import matplotlib as mpl
 	mpl.use('AGG')#change backend
@@ -46,8 +53,9 @@ try:
 	from matplotlib.colorbar import make_axes
 	from mpl_toolkits.axes_grid1 import make_axes_locatable
 	from matplotlib.colors import LinearSegmentedColormap,is_color_like,LogNorm
-except ImportError:
+except ImportError as e:
 	eprint('Fatal Error: matplotlib or parts of it not found!')
+	traceback.print_exception(type(e),e,sys.exc_info()[2])
 	sys.exit()
 
 #Create type checkers:
@@ -100,7 +108,7 @@ settings_parser.add_argument('-cbar_width',type=check_float,metavar='float',defa
 settings_parser.add_argument('-title',type=str,metavar='{{AttributeName},str}',help='Define the plot title that goes above the plot',default='AttributeName')
 settings_parser.add_argument('-title_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='enable or disable the title that goes above the plot')
 settings_parser.add_argument('-title_font',type=str,metavar='str',help='choose the font of the plot title')
-settings_parser.add_argument('-title_font_size',type=check_int,metavar='int',help='font size for title')
+settings_parser.add_argument('-title_font_size',type=check_int,default=18,metavar='int',help='font size for title')
 settings_parser.add_argument('-label_font_size',type=check_int,metavar='int',help='font size for axis labels')
 settings_parser.add_argument('-smooth_zones',type=check_bool,choices=[True,False],metavar='{True,{False}}',help='disable or enable zone smoothing')
 settings_parser.add_argument('-image_format',type=str,choices=['png','svg','pdf','ps','jpeg','gif','tiff','eps'],default='png',metavar="{{'png'},'svg','pdf','ps','jpeg','gif','tiff','eps'}",help='specify graph output format')
@@ -111,6 +119,7 @@ settings_parser.add_argument('-x_range_label',type=str,nargs=1,metavar='str',def
 settings_parser.add_argument('-y_range_label',type=str,nargs=1,metavar='str',default='Y ($10^3$ km)',help='The text to the left of the y axis')
 settings_parser.add_argument('-time_format',type=str,metavar='{{seconds}, s, ms, milliseconds}',nargs=1,default='seconds',choices=["seconds", "s", "ms", "milliseconds"],help='Time format code to use for elapsed time and bounce time')
 settings_parser.add_argument('-bounce_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "time since bounce" display')
+settings_parser.add_argument('-ctime_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for data creation time display')
 settings_parser.add_argument('-elapsed_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "elapsed time" display')
 settings_parser.add_argument('-zoom_value',type=check_float,help='The zoom value (percentage of total range) to use if the x or y range is set to \'auto\'')
 settings_parser.add_argument('-var_unit',type=str,default='auto',help='The unit to use for the plotted variable')
@@ -173,8 +182,10 @@ except ImportError:
 					# normal ElementTree install
 					import elementtree.ElementTree as et
 					qprint("running with ElementTree")
-				except ImportError:
+				except ImportError as e:
 					eprint("Fatal error: Failed to import ElementTree from any known place. XML writing is impossible. ")
+					traceback.print_exception(type(e),e,sys.exc_info()[2])
+					sys.exit()
 # Carefully import numpy for heavy number crunching
 try:
 	import numpy as np
@@ -186,8 +197,9 @@ try:
 		rho = np.sqrt(x**2 + y**2)
 		phi = np.arctan2(y, x)
 		return(rho, phi)
-except ImportError:
+except ImportError as e:
 	eprint('Fatal Error: numpy not found! (used to do math faster)')
+	traceback.print_exception(type(e),e,sys.exc_info()[2])
 	sys.exit()
 
 #create a function to list all valid grid names in the xdmf:
@@ -219,7 +231,7 @@ for file in args.files:
 	
 	if args.tree:
 		tree()
-		sys.exit()
+		sys.exit() #only does the first file for sanity sake
 
 	file_directory=''
 	if re.search('.*\/(?!.+\/)',file):
@@ -329,31 +341,43 @@ for file in args.files:
 		variable=hf[datapath][start[0]:end[0]:stride[0],start[1]:end[1]:stride[1],start[2]:end[2]:stride[2],start[3]:end[3]:stride[3]]
 	else:
 		variable=hf[datapath][start[0]:end[0]:stride[0],start[1]:end[1]:stride[1],start[2]:end[2]:stride[2]]
-	# br()
-	# variable=
 	variable=variable.squeeze() #remove dimensions of size 1 so the result is a 2d array
-	# Get Time:
-	try:
-		time_bounce=float(domain.find("*[@Name='"+gridname+"']/Time").attrib['Value'])
-	except KeyError:
-		eprint('Static time not found!')
+
 	# Get Creation time
 	try:
 		ctime='Data from '+time_lib.ctime(float(domain.find('Information[@Name="ctime"]').attrib['Value']))
 	except KeyError:
 		eprint('Could not find ctime')
-	fun=domain.find("*[@Name='"+gridname+"']/Information[@Name='Time']").getchildren()[0]
-	if fun is not None:
+	try:
+		fun=domain.find("*[@Name='"+gridname+"']/Information[@Name='Time']").getchildren()[0] #more robustly get time
+		if fun is not None:
+			try:
+				assert fun.attrib['ItemType']=='Function' and fun.attrib['Function']=='$0-$1' #I don't want to write a proper function parser because that's complex/meta
+				timepath=fun.getchildren()[0].text.rsplit(':')[1] #return eg: /mesh/time
+				bouncepath=fun.getchildren()[1].text.rsplit(':')[1] #return eg: /mesh/t_bounce
+				time_bounce=hf[timepath].value-hf[bouncepath].value
+				time_elapsed=hf[timepath].value
+			# except AssertionError:
+				# try:
+					# from math import *
+					# expression=re.sub(r'\$(\d*)',r'var[\1]',fun.attrib['Function'])
+					# var=[]
+					# for n in xrange(len(fun.getchildren())):
+					# 	var.append(hf[fun.getchildren()[n].text.rsplit(':')[1]].value)
+					# br()
+					# time_bounce=eval(expression)
+					# time_elapsed=time_bounce
+			except:
+				eprint('Could not retrieve time from '+gridname)
+				eprint('	Time not formatted as known pattern')
+				sys.exit()
+	except: # Get Time simply as fall back:
 		try:
-			assert fun.attrib['ItemType']=='Function' and fun.attrib['Function']=='$0-$1' #I don't want to write a proper function parser because that's complex/meta
-			time_bounce=fun.getchildren()[0]
-			timepath=fun.getchildren()[0].text.rsplit(':')[1] #return eg: /mesh/time
-			bouncepath=fun.getchildren()[1].text.rsplit(':')[1] #return eg: /mesh/t_bounce
-			time_bounce=hf[timepath].value-hf[bouncepath].value
-		except:
-			eprint('Could not retrieve time from '+gridname)
-			eprint('	Time not formatted as known pattern')
-			sys.exit()
+			bounce_time=float(domain.find("*[@Name='"+gridname+"']/Time").attrib['Value'])
+			settings.elapsed_time_enabled=False
+		except KeyError:
+			eprint('Static time not found!')
+
 	fig = plt.figure(figsize=(12.1,7.2))
 	fig.set_size_inches(12.1, 7.2,forward=True)
 	sp=fig.add_subplot(111)
@@ -450,8 +474,13 @@ for file in args.files:
 			cax.yaxis.set_ticks_position(settings.cbar_location)
 
 	# fig.suptitle('this is the figure title', fontsize=12,)
+	if settings.ctime_enabled:
+		plt.figtext(.99,[.01,.965][settings.cbar_location=='bottom'],ctime,horizontalalignment='right',transform=ax.transAxes)# add following to see background: bbox=dict(facecolor='red', alpha=0.5)
+	if settings.bounce_time_enabled:
+		plt.figtext(.01,[.01,[.965,.975][settings.elapsed_time_enabled]][settings.cbar_location=='bottom'],'Bounce time: '+format(time_bounce,'.3'),horizontalalignment='left',transform=ax.transAxes)# add following to see background: bbox=dict(facecolor='red', alpha=0.5)
+	if settings.elapsed_time_enabled:
+		plt.figtext(.01,[[.01,.03][settings.bounce_time_enabled],[.965,.953][settings.bounce_time_enabled]][settings.cbar_location=='bottom'],'Elapsed time: '+format(time_elapsed,'.3'),horizontalalignment='left',transform=ax.transAxes)# add following to see background: bbox=dict(facecolor='red', alpha=0.5)
 	plt.tight_layout()
-	# plt.figtext(1,0,'Elapsed time:'+str(grid.getTime().getValue()),horizontalalignment='center',transform=ax.transAxes,bbox=dict(facecolor='red', alpha=0.5))
 	directory='.'
 	if args.dir:
 		directory=args.dir
@@ -461,8 +490,9 @@ for file in args.files:
 	plt.savefig(directory+'/'+image_name,format=settings.image_format,facecolor=settings.background_color,orientation='landscape') 
 	qprint('time elapsed:	'+str(time_lib.time()-start_time))
 	del start_time
-	# Comment and uncomment the next 2 lines to show the image on mac (must have saved the image first):
-	from subprocess import call # for on-the-fly lightning fast image viewing on mac
-	call(['qlmanage -p '+directory+'/'+image_name+' &> /dev/null'],shell=True) # for on-the-fly lightning fast image viewing on mac
-	# Comment and uncomment th next line to show the image on other platforms or if you haven't saved it first:
-	# plt.show() #Built in interactive viewer for non-macOS platforms. Slower.
+	if args.debug:
+		if platform.system()=='Darwin':
+			from subprocess import call # for on-the-fly lightning fast image viewing on mac
+			call(['qlmanage -p '+directory+'/'+image_name+' &> /dev/null'],shell=True) # for on-the-fly lightning fast image viewing on mac
+		else:
+			plt.show() #Built in interactive viewer for non-macOS platforms. Slower.
