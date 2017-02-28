@@ -205,7 +205,7 @@ except ImportError as e:
 #create a function to list all valid grid names in the xdmf:
 def valid_grid_names():
 	gridnames=[]
-	for grd in domain.getchildren(): #grd is a grid element
+	for grd in domain.findall('Grid'): #grd is a grid element
 		gridnames.append(grd.get('Name'))
 	return gridnames
 
@@ -220,11 +220,11 @@ def valid_variables(gridname):
 def tree():
 	qprint('Found valid scalars:')
 	for grid in valid_grid_names():
-		qprint('\n'+grid,end='')
+		qprint(grid,end=':')
 		variables=valid_variables(grid)
 		for i,variable in enumerate(variables):
-			qprint(['\n\t',''][i!=0 or i==len(variables)]+variable+(','+'\n\t'*((i+1)%5==0))*(i!=len(variables)-1),end=' ')
-	qprint()
+			qprint(['\n\t  ',''][i!=0 or i==len(variables)]+variable+(', '+'\n\t  '*((i+1)%5==0))*(i!=len(variables)-1),end='')
+		qprint()
 
 for file in args.files:
 	domain=et.parse(file).getroot()[0]
