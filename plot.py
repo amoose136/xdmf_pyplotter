@@ -108,11 +108,13 @@ settings_parser.add_argument('-cmap',choices=colormaps,default='hot_desaturated'
 settings_parser.add_argument('-background_color',type=check_color,default='white',help='color to use as background')#done
 settings_parser.add_argument('-text_color',type=check_color,default='black',help='color to use for text and annotations')
 settings_parser.add_argument('-cbar_scale',type=str,default='lin',choices=['lin','log'],metavar="{{lin},log}",help='Linear or log scale colormap')
-settings_parser.add_argument('-cbar_domain',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The domain of the color bar')
+settings_parser.add_argument('-cbar_domain_min',type=check_float,metavar=("{{auto},min}"),default='auto',help='The min domain of the color bar')
+settings_parser.add_argument('-cbar_domain_max',type=check_float,metavar=("{{auto},max}"),default='auto',help='The max domain of the color bar')
 settings_parser.add_argument('-cbar_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',nargs=1,default=True,help='enable or disable colorbar')
 settings_parser.add_argument('-cbar_location',type=str,choices=['left','right','top','bottom'],metavar='{\'left\',{\'right\'},\'top\',\'bottom\'}',default='right',help='set the colorbar position')
 settings_parser.add_argument('-cbar_width',type=check_float,metavar='float',default='5.0',help='The width of the colorbar')
 settings_parser.add_argument('-title',type=str,metavar='{{AttributeName},str}',help='Define the plot title that goes above the plot',default='AttributeName')
+settings_parser.add_argument('-image_name',type=str,metavar='{{AttributeName},str}',help='Sets name of image',default='Image')
 settings_parser.add_argument('-title_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='enable or disable the title that goes above the plot')
 settings_parser.add_argument('-title_font',type=str,metavar='str',help='choose the font of the plot title')
 settings_parser.add_argument('-title_font_size',type=check_int,default=18,metavar='int',help='font size for title')
@@ -122,8 +124,8 @@ settings_parser.add_argument('-image_format',type=str,choices=['png','svg','pdf'
 settings_parser.add_argument('-image_size',type=check_int,nargs=2,metavar='int',default=[1280,710],help='specify the size of image')
 settings_parser.add_argument('-x_range_km',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The range of the x axis in km')
 settings_parser.add_argument('-y_range_km',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The range of the y axis in km')
-settings_parser.add_argument('-x_range_label',type=str,nargs=1,metavar='str',default='X ($10^3$ km)',help='The text below the x axis')
-settings_parser.add_argument('-y_range_label',type=str,nargs=1,metavar='str',default='Y ($10^3$ km)',help='The text to the left of the y axis')
+settings_parser.add_argument('-x_range_label',type=str,metavar='str',default='X ($10^3$ km)',help='The text below the x axis')
+settings_parser.add_argument('-y_range_label',type=str,metavar='str',default='Y ($10^3$ km)',help='The text to the left of the y axis')
 settings_parser.add_argument('-time_format',type=str,metavar='{{seconds}, s, ms, milliseconds}',nargs=1,default='seconds',choices=["seconds", "s", "ms", "milliseconds"],help='Time format code to use for elapsed time and bounce time')
 settings_parser.add_argument('-bounce_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "time since bounce" display')
 settings_parser.add_argument('-ctime_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for data creation time display')
@@ -259,7 +261,12 @@ for file in args.files:
 		TrueVarname=varname 
 		TrueGridname=gridname
 	del match
-	image_name = re.search('(?!.+\/.+)(?!\/).+',TrueVarname).group().title()+'_'+re.search('(?!.*\/).*',file).group()[:-4]+'.'+settings.image_format
+	# Note:
+	# '(?!.*\/).*' is regex to find all the parts of a path prior to the file name
+	if settings.image_name:
+		image_name = settings.image_name+'_'+re.search('(?!.*\/).*',file).group()[:-4]+'.'+settings.image_format
+	else:
+		image_name = re.search('(?!.*\/).*',TrueVarname).group().title()+'_'+re.search('(?!.*\/).*',file).group()[:-4]+'.'+settings.image_format
 	coordinates=[]
 	def get_coordinates( ):
 		expected_dim=grid.find('Topology').get('NumberOfElements').split()
@@ -365,16 +372,17 @@ for file in args.files:
 				bouncepath=fun.getchildren()[1].text.rsplit(':')[1] #return eg: /mesh/t_bounce
 				time_bounce=hf[timepath].value-hf[bouncepath].value
 				time_elapsed=hf[timepath].value
+			# below is an attempt to accept and interpret more general math expresiions from 'function' xdmf elementsn (currently disabled as it represents a secruity hazard)
 			# except AssertionError:
-				# try:
-					# from math import *
-					# expression=re.sub(r'\$(\d*)',r'var[\1]',fun.attrib['Function'])
-					# var=[]
-					# for n in xrange(len(fun.getchildren())):
-					# 	var.append(hf[fun.getchildren()[n].text.rsplit(':')[1]].value)
-					# br()
-					# time_bounce=eval(expression)
-					# time_elapsed=time_bounce
+			# 	try:
+			# 		from math import *
+			# 		expression=re.sub(r'\$(\d*)',r'var[\1]',fun.attrib['Function'])
+			# 		var=[]
+			# 		for n in xrange(len(fun.getchildren())):
+			# 			var.append(hf[fun.getchildren()[n].text.rsplit(':')[1]].value)
+			# 		br()
+			# 		time_bounce=eval(expression)
+			# 		time_elapsed=time_bounce
 			except:
 				eprint('Could not retrieve time from '+gridname)
 				eprint('	Time not formatted as known pattern')
@@ -455,7 +463,10 @@ for file in args.files:
 		norm=LogNorm()
 	else:
 		norm=None
-	pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'],norm=norm)
+	if settings.cbar_domain_min=='auto' and settings.cbar_domain_max=='auto':
+		pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'],norm=norm)
+	else:
+		pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'],norm=norm,vmin=settings.cbar_domain_min,vmax=settings.cbar_domain_max)
 	
 	for atr in ['title','x_range_label','y_range_label']:
 		settings.__setattr__(atr,re.sub(r'\\var(?=[^i]|$)',TrueVarname,settings.__getattribute__(atr)))
