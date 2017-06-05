@@ -10,7 +10,7 @@ import traceback
 # needed for utf-encoding on python 2:
 if six.PY2:
 	reload(sys)
-	sys.setdefaultencoding('utf8')
+	sys.setdefaultencoding('utf-8')
 # for io diagnostics:
 start_time = time_lib.time()
 # construct main parser:
@@ -33,7 +33,7 @@ def print_help():
 		settings_parser.print_help()
 		sys.exit()
 # create subparser for all the plot settings:
-settings_parser=argparse.ArgumentParser(description="Input plot settings for matplotlib to use",prog='plot.config parser')
+settings_parser=argparse.ArgumentParser(description="Input plot settings for matplotlib to use",prog='plot.config parser',prefix_chars=u'•')
 
 # define an error printing function for error reporting to terminal STD error IO stream
 def eprint(*arg, **kwargs):
@@ -75,19 +75,21 @@ def check_bool(value):
 	else: 
 		raise argparse.ArgumentTypeError("%s is an invalid boolean value" % value)
 def check_int(value):
-	if int(value):
+	try:
 		return int(value)
-	elif value=='auto':
-		return 'auto'
-	else:
-		raise argparse.ArgumentTypeError("%s is an invalid int value" % value)
+	except ValueError:
+		if value=='auto':
+			return 'auto'
+		else:
+			raise argparse.ArgumentTypeError("%s is an invalid int value" % value)
 def check_float(value):
-	if float(value):
+	try:
 		return float(value)
-	elif value=='auto':
-		return 'auto'
-	else:
-		raise argparse.ArgumentTypeError("%s is an invalid float value" % value)
+	except ValueError:
+		if value=='auto':
+			return 'auto'
+		else:
+			raise argparse.ArgumentTypeError("%s is an invalid float value" % value)
 def check_color(value):
 	if is_color_like(value):
 		return value
@@ -95,7 +97,7 @@ def check_color(value):
 		raise argparse.ArgumentTypeError("%s is an invalid color value" % value)
 
 # create subparser for settings file arguments:
-settings_parser.add_argument('-variable',type=str,metavar='AttributeName',help='The attribute to plot like \'Entropy\', or \'Density\', etc. The name must match the XDMF attribute tags')
+settings_parser.add_argument(u'•variable',type=str,metavar='AttributeName',help='The attribute to plot like \'Entropy\', or \'Density\', etc. The name must match the XDMF attribute tags')
 
 # define a list of colormap names that matplotlib has, skipping over the reversed versions
 colormaps=[str(m) for m in plt.cm.datad if not m.endswith("_r")]
@@ -104,34 +106,34 @@ colormaps.append('viridis')
 colormaps=sorted(colormaps, key=lambda s: s.lower())
 
 #continue with subparser argument creation:
-settings_parser.add_argument('-cmap',choices=colormaps,default='hot_desaturated',help='Colormap to use for colorbar')#done
-settings_parser.add_argument('-background_color',type=check_color,default='white',help='color to use as background')#done
-settings_parser.add_argument('-text_color',type=check_color,default='black',help='color to use for text and annotations')
-settings_parser.add_argument('-cbar_scale',type=str,default='lin',choices=['lin','log'],metavar="{{lin},log}",help='Linear or log scale colormap')
-settings_parser.add_argument('-cbar_domain_min',type=check_float,metavar=("{{auto},min}"),default='auto',help='The min domain of the color bar')
-settings_parser.add_argument('-cbar_domain_max',type=check_float,metavar=("{{auto},max}"),default='auto',help='The max domain of the color bar')
-settings_parser.add_argument('-cbar_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',nargs=1,default=True,help='enable or disable colorbar')
-settings_parser.add_argument('-cbar_location',type=str,choices=['left','right','top','bottom'],metavar='{\'left\',{\'right\'},\'top\',\'bottom\'}',default='right',help='set the colorbar position')
-settings_parser.add_argument('-cbar_width',type=check_float,metavar='float',default='5.0',help='The width of the colorbar')
-settings_parser.add_argument('-title',type=str,metavar='{{AttributeName},str}',help='Define the plot title that goes above the plot',default='AttributeName')
-settings_parser.add_argument('-image_name',type=str,metavar='{{AttributeName},str}',help='Sets name of image',default='Image')
-settings_parser.add_argument('-title_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='enable or disable the title that goes above the plot')
-settings_parser.add_argument('-title_font',type=str,metavar='str',help='choose the font of the plot title')
-settings_parser.add_argument('-title_font_size',type=check_int,default=18,metavar='int',help='font size for title')
-settings_parser.add_argument('-label_font_size',type=check_int,metavar='int',help='font size for axis labels')
-settings_parser.add_argument('-smooth_zones',type=check_bool,choices=[True,False],metavar='{True,{False}}',help='disable or enable zone smoothing')
-settings_parser.add_argument('-image_format',type=str,choices=['png','svg','pdf','ps','jpeg','gif','tiff','eps'],default='png',metavar="{{'png'},'svg','pdf','ps','jpeg','gif','tiff','eps'}",help='specify graph output format')
-settings_parser.add_argument('-image_size',type=check_int,nargs=2,metavar='int',default=[1280,710],help='specify the size of image')
-settings_parser.add_argument('-x_range_km',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The range of the x axis in km')
-settings_parser.add_argument('-y_range_km',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The range of the y axis in km')
-settings_parser.add_argument('-x_range_label',type=str,metavar='str',default='X ($10^3$ km)',help='The text below the x axis')
-settings_parser.add_argument('-y_range_label',type=str,metavar='str',default='Y ($10^3$ km)',help='The text to the left of the y axis')
-settings_parser.add_argument('-time_format',type=str,metavar='{{seconds}, s, ms, milliseconds}',nargs=1,default='seconds',choices=["seconds", "s", "ms", "milliseconds"],help='Time format code to use for elapsed time and bounce time')
-settings_parser.add_argument('-bounce_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "time since bounce" display')
-settings_parser.add_argument('-ctime_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for data creation time display')
-settings_parser.add_argument('-elapsed_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "elapsed time" display')
-settings_parser.add_argument('-zoom_value',type=check_float,help='The zoom value (percentage of total range) to use if the x or y range is set to \'auto\'')
-settings_parser.add_argument('-var_unit',type=str,default='auto',help='The unit to use for the plotted variable')
+settings_parser.add_argument(u'•cmap',choices=colormaps,default='hot_desaturated',help='Colormap to use for colorbar')#done
+settings_parser.add_argument(u'•background_color',type=check_color,default='white',help='color to use as background')#done
+settings_parser.add_argument(u'•text_color',type=check_color,default='black',help='color to use for text and annotations')
+settings_parser.add_argument(u'•cbar_scale',type=str,default='lin',choices=['lin','log'],metavar="{{lin},log}",help='Linear or log scale colormap')
+settings_parser.add_argument(u'•cbar_domain_min',type=check_float,metavar=("{{auto},min}"),default='auto',help='The min domain of the color bar')
+settings_parser.add_argument(u'•cbar_domain_max',type=check_float,metavar=("{{auto},max}"),default='auto',help='The max domain of the color bar')
+settings_parser.add_argument(u'•cbar_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',nargs=1,default=True,help='enable or disable colorbar')
+settings_parser.add_argument(u'•cbar_location',type=str,choices=['left','right','top','bottom'],metavar='{\'left\',{\'right\'},\'top\',\'bottom\'}',default='right',help='set the colorbar position')
+settings_parser.add_argument(u'•cbar_width',type=check_float,metavar='float',default='5.0',help='The width of the colorbar')
+settings_parser.add_argument(u'•title',type=str,metavar='{{AttributeName},str}',help='Define the plot title that goes above the plot',default='AttributeName')
+settings_parser.add_argument(u'•image_name',type=str,metavar='{{AttributeName},str}',help='Sets name of image',default='Image')
+settings_parser.add_argument(u'•title_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='enable or disable the title that goes above the plot')
+settings_parser.add_argument(u'•title_font',type=str,metavar='str',help='choose the font of the plot title')
+settings_parser.add_argument(u'•title_font_size',type=check_int,default=18,metavar='int',help='font size for title')
+settings_parser.add_argument(u'•label_font_size',type=check_int,metavar='int',help='font size for axis labels')
+settings_parser.add_argument(u'•smooth_zones',type=check_bool,choices=[True,False],metavar='{True,{False}}',help='disable or enable zone smoothing')
+settings_parser.add_argument(u'•image_format',type=str,choices=['png','svg','pdf','ps','jpeg','gif','tiff','eps'],default='png',metavar="{{'png'},'svg','pdf','ps','jpeg','gif','tiff','eps'}",help='specify graph output format')
+settings_parser.add_argument(u'•image_size',type=check_int,nargs=2,metavar='int',default=[1280,710],help='specify the size of image')
+settings_parser.add_argument(u'•x_range_km',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The range of the x axis in km')
+settings_parser.add_argument(u'•y_range_km',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The range of the y axis in km')
+settings_parser.add_argument(u'•x_range_label',type=str,metavar='str',default='X ($10^3$ km)',help='The text below the x axis')
+settings_parser.add_argument(u'•y_range_label',type=str,metavar='str',default='Y ($10^3$ km)',help='The text to the left of the y axis')
+settings_parser.add_argument(u'•time_format',type=str,metavar='{{seconds}, s, ms, milliseconds}',nargs=1,default='seconds',choices=["seconds", "s", "ms", "milliseconds"],help='Time format code to use for elapsed time and bounce time')
+settings_parser.add_argument(u'•bounce_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "time since bounce" display')
+settings_parser.add_argument(u'•ctime_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for data creation time display')
+settings_parser.add_argument(u'•elapsed_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "elapsed time" display')
+settings_parser.add_argument(u'•zoom_value',type=check_float,help='The zoom value (percentage of total range) to use if the x or y range is set to \'auto\'')
+settings_parser.add_argument(u'•var_unit',type=str,default='auto',help='The unit to use for the plotted variable')
 print_help()#print_help does a hacky help flag overload by intercepting the sys.argv before the parser in order to also print the help for the settings file
 #if the help flag isn't there, continue and parse arguments as normal
 args=parser.parse_args()
@@ -142,16 +144,16 @@ if args.settingsfile and args.settingsfile in ['help','h']:
 	sys.exit()
 
 # Define parsed settings
-argslist=[i[1:] for i in settings_parser.__dict__['_option_string_actions'].keys()] #generate list of valid arguments to prepend '-' to if it's not the first char
+argslist=[i[1:] for i in settings_parser.__dict__['_option_string_actions'].keys()] #generate list of valid arguments to prepend '•' to if it's not the first char
 if args.settingsfile and args.settingsfile!='':
 	settingsargs=[]
 	for super_arg in csv.reader(open(args.settingsfile).read().split('\n'),delimiter=' ',quotechar='"',escapechar='\\'):
 		if super_arg[0][0]+super_arg[0][1]=='//': #implement commenting
 			continue 
 		for arg in super_arg:
-			# account for the required '-' needed for argparse
+			# account for the required '•' needed for argparse
 			if arg in argslist:
-				settingsargs.append('-'+arg) 
+				settingsargs.append(u'•'+arg) 
 			else:
 				settingsargs.append(arg)
 	settings=settings_parser.parse_args(settingsargs)
