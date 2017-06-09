@@ -121,7 +121,7 @@ settings_parser.add_argument(u'•title_enabled',type=check_bool,choices=[True,F
 settings_parser.add_argument(u'•title_font',type=str,metavar='str',help='choose the font of the plot title')
 settings_parser.add_argument(u'•title_font_size',type=check_int,default=18,metavar='int',help='font size for title')
 settings_parser.add_argument(u'•label_font_size',type=check_int,metavar='int',help='font size for axis labels')
-settings_parser.add_argument(u'•smooth_zones',type=check_bool,choices=[True,False],metavar='{True,{False}}',help='disable or enable zone smoothing')
+settings_parser.add_argument(u'•smooth_zones',type=check_bool,choices=[True,False],metavar='{True,{False}}',default=False,help='disable or enable zone smoothing')
 settings_parser.add_argument(u'•image_format',type=str,choices=['png','svg','pdf','ps','jpeg','gif','tiff','eps'],default='png',metavar="{{'png'},'svg','pdf','ps','jpeg','gif','tiff','eps'}",help='specify graph output format')
 settings_parser.add_argument(u'•image_size',type=check_int,nargs=2,metavar='int',default=[1280,710],help='specify the size of image')
 settings_parser.add_argument(u'•x_range_km',type=check_float,nargs=2,metavar=("{{auto},min}","{{auto},max}"),default=['auto','auto'],help='The range of the x axis in km')
@@ -460,15 +460,16 @@ for file in args.files:
 	# Also create reversed version
 	cdict_r={'red':cdict['red'][::-1],'green':cdict['green'][::-1],'blue':cdict['blue'][::-1]}
 	hot_desaturated_r=LinearSegmentedColormap('hot_desaturated_r',cdict_r,N=256,gamma=1.0)
+
 	del cdict,cdict_r
 	if settings.cbar_scale=='log':
 		norm=LogNorm()
 	else:
 		norm=None
 	if settings.cbar_domain_min=='auto' and settings.cbar_domain_max=='auto':
-		pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'],norm=norm)
+		pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'],norm=norm,antialiased=settings.smooth_zones)
 	else:
-		pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'],norm=norm,vmin=settings.cbar_domain_min,vmax=settings.cbar_domain_max)
+		pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'],norm=norm,vmin=settings.cbar_domain_min,vmax=settings.cbar_domain_max,antialiased=settings.smooth_zones)
 	
 	for atr in ['title','x_range_label','y_range_label']:
 		settings.__setattr__(atr,re.sub(r'\\var(?=[^i]|$)',TrueVarname,settings.__getattribute__(atr)))
