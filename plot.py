@@ -148,9 +148,9 @@ argslist=[i[1:] for i in settings_parser.__dict__['_option_string_actions'].keys
 if args.settingsfile and args.settingsfile!='':
 	settingsargs=[]
 	for super_arg in csv.reader(open(args.settingsfile).read().split('\n'),delimiter=' ',quotechar='"',escapechar='\\'):
-		if super_arg[0][0]+super_arg[0][1]=='//': #implement commenting
+		if not filter(None,super_arg) or super_arg[0][0]+super_arg[0][1]=='//': #implement commenting and avoid empty lines
 			continue 
-		for arg in super_arg:
+		for arg in filter(None,super_arg):
 			# account for the required '•' needed for argparse
 			if arg in argslist:
 				settingsargs.append(u'•'+arg) 
