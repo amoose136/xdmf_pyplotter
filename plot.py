@@ -93,6 +93,8 @@ def check_float(value):
 def check_color(value):
 	if is_color_like(value):
 		return value
+	elif value=='background':
+		return value
 	else:
 		raise argparse.ArgumentTypeError("%s is an invalid color value" % value)
 
@@ -112,6 +114,8 @@ settings_parser.add_argument(u'•text_color',type=check_color,default='black',h
 settings_parser.add_argument(u'•cbar_scale',type=str,default='lin',choices=['lin','log'],metavar="{{lin},log}",help='Linear or log scale colormap')
 settings_parser.add_argument(u'•cbar_domain_min',type=check_float,metavar=("{{auto},min}"),default='auto',help='The min domain of the color bar')
 settings_parser.add_argument(u'•cbar_domain_max',type=check_float,metavar=("{{auto},max}"),default='auto',help='The max domain of the color bar')
+settings_parser.add_argument(u'•cbar_over_color',type=check_color,default=None,help='color to use for values above color bar.  If not set, use cbar maximum')
+settings_parser.add_argument(u'•cbar_under_color',type=check_color,default=None,help='color to use for values below color bar. If not set, use cbar minimum')
 settings_parser.add_argument(u'•cbar_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',nargs=1,default=True,help='enable or disable colorbar')
 settings_parser.add_argument(u'•cbar_location',type=str,choices=['left','right','top','bottom'],metavar='{\'left\',{\'right\'},\'top\',\'bottom\'}',default='right',help='set the colorbar position')
 settings_parser.add_argument(u'•cbar_width',type=check_float,metavar='float',default='5.0',help='The width of the colorbar')
@@ -470,7 +474,21 @@ for file in args.files:
 		pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'],norm=norm,antialiased=settings.smooth_zones)
 	else:
 		pcolor=sp.pcolormesh(x, y, variable,cmap=[hot_desaturated,settings.cmap][settings.cmap!='hot_desaturated'],norm=norm,vmin=settings.cbar_domain_min,vmax=settings.cbar_domain_max,antialiased=settings.smooth_zones)
-	
+
+	if settings.cbar_over_color=='background':
+		pcolor.cmap.set_over(color=settings.background_color, alpha=None)
+		print('Using over color: background')
+	elif settings.cbar_over_color:
+		pcolor.cmap.set_over(color=settings.cbar_over_color, alpha=None)
+		print('Using over color:',settings.cbar_over_color)
+
+	if settings.cbar_under_color=='background':
+		pcolor.cmap.set_under(color=settings.background_color, alpha=None)
+		print('Using under color: background')
+	elif settings.cbar_under_color:
+		pcolor.cmap.set_under(color=settings.cbar_under_color, alpha=None)
+		print('Using under color:',settings.cbar_under_color)
+
 	for atr in ['title','x_range_label','y_range_label']:
 		settings.__setattr__(atr,re.sub(r'\\var(?=[^i]|$)',TrueVarname,settings.__getattribute__(atr)))
 		settings.__setattr__(atr,re.sub(r'\\variable',TrueVarname.lower(),settings.__getattribute__(atr)))
