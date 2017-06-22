@@ -116,6 +116,7 @@ settings_parser.add_argument(u'•cbar_domain_min',type=check_float,metavar=("{{
 settings_parser.add_argument(u'•cbar_domain_max',type=check_float,metavar=("{{auto},max}"),default='auto',help='The max domain of the color bar')
 settings_parser.add_argument(u'•cbar_over_color',type=check_color,default=None,help='color to use for values above color bar.  If not set, use cbar maximum')
 settings_parser.add_argument(u'•cbar_under_color',type=check_color,default=None,help='color to use for values below color bar. If not set, use cbar minimum')
+settings_parser.add_argument(u'•cbar_bad_color',type=check_color,default=None,help='color to use for bad values. If not set, they are tranparent')
 settings_parser.add_argument(u'•cbar_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',nargs=1,default=True,help='enable or disable colorbar')
 settings_parser.add_argument(u'•cbar_location',type=str,choices=['left','right','top','bottom'],metavar='{\'left\',{\'right\'},\'top\',\'bottom\'}',default='right',help='set the colorbar position')
 settings_parser.add_argument(u'•cbar_width',type=check_float,metavar='float',default='5.0',help='The width of the colorbar')
@@ -488,6 +489,10 @@ for file in args.files:
 	elif settings.cbar_under_color:
 		pcolor.cmap.set_under(color=settings.cbar_under_color, alpha=None)
 		print('Using under color:',settings.cbar_under_color)
+
+	if settings.cbar_bad_color:
+		pcolor.cmap.set_bad(color=settings.cbar_bad_color, alpha=None)
+		print('Using bad color:',settings.cbar_bad_color)
 
 	for atr in ['title','x_range_label','y_range_label']:
 		settings.__setattr__(atr,re.sub(r'\\var(?=[^i]|$)',TrueVarname,settings.__getattribute__(atr)))
