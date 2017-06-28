@@ -154,7 +154,7 @@ settings_parser.add_argument(u'•particle_size',type=check_float,default=0.7,me
 settings_parser.add_argument(u'•shock_contour_enabled', type=check_bool,choices=[True,False],metavar='{True,{False}}',default=False,help='Displays the supernova schockwave as a contour plot')
 settings_parser.add_argument(u'•shock_contour_line_widths',type=check_float,default=4.,metavar='float',help='Sets the line width of the shock contour plot')
 settings_parser.add_argument(u'•shock_contour_cmap',type=str,choices=colormaps,default='binary_r',help='Colormap to use for shock contour plot')
-settings_parser.add_argument(u'•settings.shock_contour_style',type=str,default='solid',help='Sets the linestyle for the shock contour plot')
+settings_parser.add_argument(u'•shock_contour_style',type=str,default='solid',help='Sets the linestyle for the shock contour plot')
 print_help()#print_help does a hacky help flag overload by intercepting the sys.argv before the parser in order to also print the help for the settings file
 #if the help flag isn't there, continue and parse arguments as normal
 args=parser.parse_args()
