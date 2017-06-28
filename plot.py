@@ -421,6 +421,7 @@ for file in args.files:
 	fig.set_size_inches(12.1, 7.2,forward=True)
 	sp=fig.add_subplot(111)
 	
+	#The following branch will generate a line graph of the shock radius when enabled
 	if settings.shock_enabled:
                 plt.subplot(111)
                 try:
@@ -436,6 +437,7 @@ for file in args.files:
                         r[num], theta[num] = pol2cart(r[num], arr_val)
                 plt.plot(r/1e5, theta/1e5, linestyle=settings.shock_linestyle, color=settings.shock_line_color,\
                          linewidth = settings.shock_line_width, label = "Shock Radius", zorder = 4)
+	#The following branch will display the nse_c contour plot when enabled
         if settings.nse_c_contour:
                 plt.subplot(111)
                 try:
@@ -458,12 +460,13 @@ for file in args.files:
 
                 nse_c = plt.contour(var1/1e5, var2/1e5, data2, levels = bounds, cmap=settings.nse_cmap,\
                                     zorder = 3, linewidths = settings.nse_c_line_widths, linestyles=settings.nse_c_linestyles)
-
+	#The following branch will print a label corresponding to the shock radius line. If the shock radius is not enabled a warning is output
         if settings.legend_enabled:
                 if settings.shock_enabled:
                         plt.legend()
                 else:
                         qprint("No legend to print. The schock wave radius is not enabled")
+	#The following branch will overlay a scatter plot of tracer particles
         if settings.particle_overlay:
                 plt.subplot(111)
                 try:
@@ -475,7 +478,7 @@ for file in args.files:
                         sys.exit()
                 px, py = pol2cart(px, py)
                 particles = plt.scatter(px/1e5, py/1e5, s = settings.particle_size, color = settings.particle_color, zorder = 5)
-                
+	#The following code overlays a 2-D shock contour
         if settings.shock_contour_enabled:
                 plt.subplot(111)
                 try:
