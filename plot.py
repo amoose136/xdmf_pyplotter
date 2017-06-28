@@ -155,6 +155,8 @@ settings_parser.add_argument(u'•shock_contour_enabled', type=check_bool,choice
 settings_parser.add_argument(u'•shock_contour_line_widths',type=check_float,default=4.,metavar='float',help='Sets the line width of the shock contour plot')
 settings_parser.add_argument(u'•shock_contour_cmap',type=str,choices=colormaps,default='binary_r',help='Colormap to use for shock contour plot')
 settings_parser.add_argument(u'•shock_contour_style',type=str,default='solid',help='Sets the linestyle for the shock contour plot')
+settings_parser.add_argument(u'•particle_numbers', type=check_bool,choices=[True,False],metavar='{True,{False}}',default=False,help='Displays the tracer particles as numbers')
+settings_parser.add_argument(u'•particle_num_size',type=check_float,default=100,metavar='float',help='Sets the particle size of the tracer particle plot if the markers are set to numbers')
 print_help()#print_help does a hacky help flag overload by intercepting the sys.argv before the parser in order to also print the help for the settings file
 #if the help flag isn't there, continue and parse arguments as normal
 args=parser.parse_args()
@@ -477,7 +479,13 @@ for file in args.files:
                         eprint('Particle data could no be found')
                         sys.exit()
                 px, py = pol2cart(px, py)
-                particles = plt.scatter(px/1e5, py/1e5, s = settings.particle_size, color = settings.particle_color, zorder = 5)
+                if settings.particle_numbers:
+                        nums = np.arange(0,px.size)
+                        qprint('NOTICE: Printing particles as numbers will take some time')
+                        for item in nums:
+                                plt.scatter(px[item]/1e5, py[item]/1e5, color = settings.particle_color, zorder = 10, marker = r"${}$".format(item), s = settings.particle_num_size)
+                else:
+                        particles = plt.scatter(px/1e5, py/1e5, s = settings.particle_size, color = settings.particle_color, zorder = 5)
 	#The following code overlays a 2-D shock contour
         if settings.shock_contour_enabled:
                 plt.subplot(111)
