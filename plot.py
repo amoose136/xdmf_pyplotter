@@ -139,6 +139,22 @@ settings_parser.add_argument(u'•ctime_enabled',type=check_bool,choices=[True,F
 settings_parser.add_argument(u'•elapsed_time_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='Boolean option for "elapsed time" display')
 settings_parser.add_argument(u'•zoom_value',type=check_float,help='The zoom value (percentage of total range) to use if the x or y range is set to \'auto\'')
 settings_parser.add_argument(u'•var_unit',type=str,default='auto',help='The unit to use for the plotted variable')
+settings_parser.add_argument(u'•shock_enabled', type=check_bool,choices=[True,False],metavar='{True,{False}}',default=False,help='Displays the supernova schockwave')
+settings_parser.add_argument(u'•shock_linestyle',type=str,default='solid',help='Sets the linestyle for the schock radius plot')
+settings_parser.add_argument(u'•legend_enabled', type=check_bool,choices=[True,False],metavar='{True,{False}}',default=False,help='Displays the legend of the graph')
+settings_parser.add_argument(u'•nse_c_contour', type=check_bool,choices=[True,False],metavar='{True,{False}}',default=False,help='Overlays the nse_c contour plot on the variable of interest plot')
+settings_parser.add_argument(u'•shock_line_width',type=check_float,default=7.,metavar='float',help='Sets the line width of the shock radius plot')
+settings_parser.add_argument(u'•shock_line_color',type=str,default='black',help='The line color of the shock radius plot')
+settings_parser.add_argument(u'•nse_c_line_widths',type=check_float,default=4.,metavar='float',help='Sets the line width of the nse_c contour plot')
+settings_parser.add_argument(u'•nse_cmap',type=str,choices=colormaps,default='binary',help='Colormap to use for nse_c contour plot')
+settings_parser.add_argument(u'•nse_c_linestyles',type=str,default='solid',help='Sets the linestyle for the nse_c contour plot')
+settings_parser.add_argument(u'•particle_overlay', type=check_bool,choices=[True,False],metavar='{True,{False}}',default=False,help='Overlays tracer particles on the plot')
+settings_parser.add_argument(u'•particle_color',type=str,default='black',help='The dot color of the tracer particle plot')
+settings_parser.add_argument(u'•particle_size',type=check_float,default=0.7,metavar='float',help='Sets the particle size of the tracer particle plot')
+settings_parser.add_argument(u'•shock_contour_enabled', type=check_bool,choices=[True,False],metavar='{True,{False}}',default=False,help='Displays the supernova schockwave as a contour plot')
+settings_parser.add_argument(u'•shock_contour_line_widths',type=check_float,default=4.,metavar='float',help='Sets the line width of the shock contour plot')
+settings_parser.add_argument(u'•shock_contour_cmap',type=str,choices=colormaps,default='binary_r',help='Colormap to use for shock contour plot')
+settings_parser.add_argument(u'•settings.shock_contour_style',type=str,default='solid',help='Sets the linestyle for the shock contour plot')
 print_help()#print_help does a hacky help flag overload by intercepting the sys.argv before the parser in order to also print the help for the settings file
 #if the help flag isn't there, continue and parse arguments as normal
 args=parser.parse_args()
@@ -404,6 +420,76 @@ for file in args.files:
 	fig = plt.figure(figsize=(12.1,7.2))
 	fig.set_size_inches(12.1, 7.2,forward=True)
 	sp=fig.add_subplot(111)
+	
+	if settings.shock_enabled:
+                plt.subplot(111)
+                try:
+                        theta = np.array(hf['/mesh/y_ef'][:])
+                        r = np.empty(theta.size)
+                        r[0:theta.size-1] = np.array(hf['analysis/r_shock'][0][:])
+                        r[-1] = r[-2]
+                except KeyError as e:
+                        eprint(e)
+                        eprint('Invalid pathway to data in h5 file.')
+                        sys.exit()
+                for num, arr_val in enumerate(theta):
+                        r[num], theta[num] = pol2cart(r[num], arr_val)
+                plt.plot(r/1e5, theta/1e5, linestyle=settings.shock_linestyle, color=settings.shock_line_color,\
+                         linewidth = settings.shock_line_width, label = "Shock Radius", zorder = 4)
+        if settings.nse_c_contour:
+                plt.subplot(111)
+                try:
+                        phi1 = np.array(hf['/mesh/y_ef'][:])
+                        rho1 = np.array(hf['/mesh/x_ef'][:])
+                        data = np.array(hf['abundance/nse_c'][:])
+                except KeyError as e:
+                        eprint(e)
+                        eprint('Invalid pathway to data in h5 file.')
+                        sys.exit()
+
+                data = data.reshape(phi1.size-1,rho1.size)      #Takes the 1xXxY data set form the h5 file and transforms into a 2D matrix
+                data2 = np.zeros((phi1.size, rho1.size))        #Initializes an array of zeros to be filled for the purpose of adding a row
+                data2[0:phi1.size-1] = data                     #Takes the data and fills it into the previously initialized array
+                data2[phi1.size-1]=data[phi1.size-2]            #Copies the last row of data into the last row of data2 to control for dimension mismatch
+
+                rho1, phi1 = np.meshgrid(rho1, phi1)            
+                var1, var2 = pol2cart(rho1, phi1)
+                bounds = np.linspace(0,1,1)
+
+                nse_c = plt.contour(var1/1e5, var2/1e5, data2, levels = bounds, cmap=settings.nse_cmap,\
+                                    zorder = 3, linewidths = settings.nse_c_line_widths, linestyles=settings.nse_c_linestyles)
+
+        if settings.legend_enabled:
+                if settings.shock_enabled:
+                        plt.legend()
+                else:
+                        qprint("No legend to print. The schock wave radius is not enabled")
+        if settings.particle_overlay:
+                plt.subplot(111)
+                try:
+                        px = np.array(hf['/particle/px'])
+                        py = np.array(hf['/particle/py'])
+                        #pz = np.array(h5file['/particle/pz'])
+                except KeyError as e:
+                        eprint('Particle data could no be found')
+                        sys.exit()
+                px, py = pol2cart(px, py)
+                particles = plt.scatter(px/1e5, py/1e5, s = settings.particle_size, color = settings.particle_color, zorder = 5)
+                
+        if settings.shock_contour_enabled:
+                plt.subplot(111)
+                try:
+                        rad = np.array(hf['/mesh/x_ef'][:])
+                        tht = np.array(hf['/mesh/y_ef'][:])
+                        f = np.array(hf['/fluid/shock'][:])
+                except KeyError as e:
+                        qprint("Shock data could not be found")
+                        sys.exit()
+                rad, tht = np.meshgrid(rad, tht)
+                var_r, var_t = pol2cart(rad, tht)
+                bds = np.linspace(0,1,2)
+                plt.contour(var_r/1e5, var_t/1e5, f, cmap=settings.shock_contour_cmap, levels = bds, zorder = 5, \
+                        linewidths = settings.shock_contour_line_widths, linestyles=settings.shock_contour_style)
 
 	# # Setup mouse-over string to interrogate data interactively when in polar coordinates
 	# def format_coord(x, y):
