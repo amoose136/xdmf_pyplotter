@@ -174,7 +174,7 @@ This option allows the user to select the size of the overlain tracer particles.
 42.	particle_numbers: {default = False} (Type = bool)
 This option allows the user to plot overlain particles, but rather than displaying points at the particle locations, numbers pertaining to each particles position is displayed. WARNING: this option will greatly reduce the speed at which a plot is generated!
 
-43.	particle_num_size: {default = 100} (Type = float)
+43.	particle_num_size: {default = 5} (Type = float)
 This option allows the user to set the size of the tracer particles if the user selects to display them as numbers.
 
 44.	shock_contour_enabled: {default = False} (Type = bool)
