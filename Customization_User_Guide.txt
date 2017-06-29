@@ -1,0 +1,190 @@
+This file is intended to describe the customization options available to the user pertaining to the plot.py program. A list of the available options is posted below:
+1.	cmap 
+2.	background_color 
+3.	text_color
+4.	cbar_scale
+5.	cbar_domain_min 
+6.	cbar_domain_max 
+7.	cbar_enabled 
+8.	cbar_location 
+9.	cbar_width
+10.	title
+11.	variable
+12.	image_name
+13.	title_enabled 
+14.	title_font
+15.	title_font_size 
+16.	label_font_size 
+17.	smooth_zones 
+18.	image_format 
+19.	image_size 
+20.	x_range_km 
+21.	y_range_km 
+22.	x_range_label
+23.	y_range_label
+24.	time_format 
+25.	bounce_time_enabled 
+26.	ctime_enabled
+27.	elapsed_time_enabled
+28.	zoom_value
+29.	var_unit
+30.	shock_enabled
+31.	shock_linestyle
+32.	legend_enabled
+33.	nse_c_contour
+34.	shock_line_width
+35.	shock_line_color
+36.	nse_c_line_widths
+37.	nse_cmap
+38.	nse_c_linestyles
+39.	particle_overlay
+40.	particle_color
+41.	particle_size
+42.	particle_numbers
+43.	particle_num_size
+44.	shock_contour_enabled
+45.	shock_contour_line_widths
+46.	shock_contour_cmap 
+47.	shock_contour_style
+
+
+1.	cmap: {default = hot_desaturated} (Type = str)
+The ‘cmap’ option refers to the colormap of the primary variable being plotted. The ‘hot_desaturated’ option is a custom bar built within the pyplotter program. One may reference the matplotlib documentation for an assortment of colormap options.
+
+2.	background_color: {default = white} (Type = str)
+The ‘background_color’ option allows the user to select a color for the background space of the generated plot. Other options include but are not limited to: black, yellow, red, etc. 
+
+3.	text_color: {default = black} (Type = str)
+The ‘text_color’ option allows the user to customize the color of the text that is displayed with the plot (such as the title).
+
+4.	cbar_scale: {default = lin} (Type = str)
+The ‘cbar_scale’ refers to the scaling of the color-bar associated with the plot. The keyword ‘lin’ refers to a linear scale. Change this option to ‘log’ for a logarithmic scale.
+
+5.	cbar_domain_min: {default = ‘auto’} (Type = float)
+The ‘cbar_domain_min’ option defines the lower bound of the color-bar associated with the plot. The default of ‘auto’ refers to ‘automatic’; thus, the pyplotter program will automatically select a minimum bound for the color bar based of the plotted variable.
+
+6.	cbar_domain_max: {default = ‘auto’} (Type = float)
+The ‘cbar_domain_max’ option defines the upper bound of the color-bar associated with the plot. The default of ‘auto’ refers to ‘automatic’; thus, the pyplotter program will automatically select a maximum bound for the color bar based of the plotted variable.
+
+7.	cbar_enabled: {default = True} (Type = bool)
+The ‘cbar_enabled’ option toggles the presence of the color-bar on the displayed plot (True = on, False = off).
+
+8.	cbar_location: {default = right} (Type = str)
+The ‘cbar_location’ defines the position of the color-bar pertaining to the displayed plot. The available position options are left, right, top, and bottom. 
+
+9.	cbar_width: {default = 5.0} (Type = float)
+The ‘cbar_width’ option allows for customization of the width of the displayed color-bar pertaining to the plotted variable. 
+
+10.	title: {default = AttributeName} (Type = str)
+The ‘title’ option refers to the title of the displayed plot. The default ‘AttributeName’ is in reference to the plotted variable and is selected the variable argument. An example title is “Plot of \\var”. 
+
+11.	variable: {default = None} (Type = str)
+The ‘variable’ option refers to the desired data the user would like to plot from the h5 file. The program requires a user to specify a variable in the settings file to display a plot.
+
+12.	image_name: {default = Image} (Type = str)
+The ‘image_name’ option sets the name of the generated image. 
+
+13.	title_enabled: {default = True} (Type = bool)
+The ‘title_enabled’ option allows the user to toggle the title of the displayed plot (True = on, False = off). 
+
+14.	title_font: {default = auto} (Type = str)
+The ‘title_font’ option allows the user to select the font used for the title of the displayed graph.
+
+15.	title_font_size: {default = 18} (Type = int)
+The ‘title_font_size’ option allows the user to customize the size of text in the plot title. 
+
+16.	label_font_size: {default = auto} (Type = int)
+The ‘label_font_size’ allows the user to customize the text corresponding to the plot labels. The default of auto mans the program automatically selects an appropriate size for the labels. 
+
+17.	smooth_zones: {default = False} (Type = bool)
+The ‘smooth_zones’ option displays or enables zone smoothing. 
+
+18.	image_format: {default = png} (Type = str)
+The ‘image_format’ option allows the user to select the format of the image produced by the plotter. The user may choose form 'png', 'svg', 'pdf', 'ps', 'jpeg', 'gif', 'tiff', and 'eps'.
+
+19.	image_size: {default = [1280,710]} (Type = int)
+The ‘image_size’ option allows the user to customize the size of the produced image.
+
+20.	x_range_km: {default = ‘auto’} (Type = float)
+The ‘x_range_km’ option allows the user to customize the range of the x-axes pertaining to the plot. The keyword ‘auto’ means that the plotter program automatically selects bounds. An example of an appropriate argument for this keyword would be: x_range_km -400 400.
+
+21.	y_range_km: {default = ‘auto’} (Type = float)
+The ‘y_range_km’ option allows the user to customize the range of the y-axes pertaining to the plot. The keyword ‘auto’ means that the plotter program automatically selects bounds. An example of an appropriate argument for this keyword would be: y_range_km 0 400.
+
+22.	x_range_label: {default = (10^3 km)} (Type = str)
+The ‘x_range_label’ option allows the user to customize the x-axis label. 
+
+23.	y_range_label: {default = (10^3 km)} (Type = str)
+The ‘y_range_label’ option allows the user to customize the y-axis label. 
+
+24.	time_format: {default = seconds} (Type = str)
+The ‘time_format’ option allows the user to select the time format code to use for elapsed time and bounce time. The available options are seconds, s, ms, and milliseconds.
+
+25.	bounce_time_enabled: {default = True} (Type = bool)
+The ‘bounce_time_enabled’ option displays the “time since bounce”.
+
+26.	ctime_enabled: {default = True} (Type = bool)
+The ‘ctime_enabled’ option exists for data creation time display.
+
+27.	elapsed_time_enabled: {default = True} (Type = bool)
+The ‘elapsed_time_enabled’ feature displays the elapsed time since initiation of the plot generation program. 
+
+28.	zoom_value: {default = } (Type = float)
+The ‘zoom_value’ option allows the user to set the zoom value (percentage of total range) to use if the x or y range is not specified by the user (i.e. left as automatic).
+
+29.	var_unit: {default = ‘auto’} (Type = str)
+The ‘var_unit’ option allows the user to specify the unit to use for the plotter variable.
+
+30.	shock_enabled: {default = False} (Type = bool)
+The ‘shock_enabled’ feature toggles the presence of an overlain plot depicting the primary shock wave radius. (Note: currently the feature is marred with discontinuities.)
+
+31.	shock_linestyle: {default = solid} (Type = str)
+This option allows the user to select their desired style for the shock radius line. Other arguments include, but are not limited to, dashed and dotted. 
+
+32.	legend_enabled: {default = False} (Type = bool)
+This option allows the user to display a legend identifying the shock radius. If the shock radius is not enabled then the user is met with a warning stating that there is nothing for the legend to describe. 
+
+33.	shock_line_width: {default = 7} (Type = float)
+This option allows the user to customize the line width of the plotted shock radius line.
+
+34.	shock_line_color: {default = black} (Type = str)
+This option allows the user to customize the line color of the plotted shock radius line.
+
+35.	nse_c_contour: {default = False} (Type = bool)
+This option allows the user to toggle the presence of a contour map depicting the NSE boundary. 
+
+36.	nse_c_line_widths: {default = 4} (Type = float)
+This option allows the user to customize the thickness of the contour lines pertaining to the overlain NSE boundary. 
+
+37.	nse_cmap: {default = binary} (Type = str)
+This option allows the user to customize the colormap used for the NSE boundary. The user should consult the matplotlib documentation to see more available options. 
+
+38.	nse_c_linestyles: {default = solid} (Type = str)
+This option allows the user to select their desired line style for the NSE boundary. 
+
+39.	particle_overlay: {default = False} (Type = bool)
+This option allows the user to toggle the overlay of tracer particles on the plot of the variable of interest. 
+
+40.	particle_color: {default = black} (Type = black)
+This option allows the user to select he color of the overlain tracer particles. 
+
+41.	particle_size: {default = 0.7} (Type = float)
+This option allows the user to select the size of the overlain tracer particles. 
+
+42.	particle_numbers: {default = False} (Type = bool)
+This option allows the user to plot overlain particles, but rather than displaying points at the particle locations, numbers pertaining to each particles position is displayed. WARNING: this option will greatly reduce the speed at which a plot is generated!
+
+43.	particle_num_size: {default = 100} (Type = float)
+This option allows the user to set the size of the tracer particles if the user selects to display them as numbers.
+
+44.	shock_contour_enabled: {default = False} (Type = bool)
+This option allows the user to display a contour of all detected shocks. This option requires the requisite data from the h5 file and is derived in the write_xml.py program.
+
+45.	shock_contour_line_widths: {default = 4} (Type = float)
+This option allows the user to designate the thickness of the shock contour lines.
+
+46.	shock_contour_cmap: {default = binary_r} (Type = str)
+This option allows the user to select the colormap to apply to the shock contour plot. The user should consult the matplotlib documentation for other options. 
+
+47.	shock_contour_style: {default = solid} (Type = str)
+This option allows the user to select the desired line type for the shock contour plot.
