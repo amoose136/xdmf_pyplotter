@@ -435,10 +435,31 @@ for file in args.files:
                         eprint(e)
                         eprint('Invalid pathway to data in h5 file.')
                         sys.exit()
-                for num, arr_val in enumerate(theta):
+		for num, arr_val in enumerate(theta):
                         r[num], theta[num] = pol2cart(r[num], arr_val)
-                plt.plot(r/1e5, theta/1e5, linestyle=settings.shock_linestyle, color=settings.shock_line_color,\
-                         linewidth = settings.shock_line_width, label = "Shock Radius", zorder = 4)
+		maximum = 0
+		for num, arr_val in enumerate(r):
+			if num == 0:
+				maximum = abs(arr_val)
+                        if arr_val > maximum:
+                                maximum = abs(arr_val)
+		i = 0
+		while maximum / 10 > 1:
+                        maximum = maximum/10
+                        i += 1
+                swr_cont = np.empty(1)
+                swt_cont = np.empty(1)
+                for num, arr_val in enumerate(r):
+                    if np.sqrt(arr_val**2 + theta[num]**2)<1*10**i and np.sqrt(arr_val**2 + theta[num]**2)>1*10**(i-1):
+                        pass
+                    elif np.sqrt(arr_val**2 + theta[num]**2)<1*10**(i-1):
+                        pass
+                    else:
+                        swr_cont = np.append(swr_cont, arr_val)
+                        swt_cont = np.append(swt_cont, theta[num])
+
+                plt.plot(swr_cont[1:]/1e5, swt_cont[1:]/1e5, c = settings.shock_line_color, linestyle = settings.shock_linestyle,\
+                         linewidth = settings.shock_line_width, zorder = 6, label = 'Shock Radius')
 	#The following branch will display the nse_c contour plot when enabled
         if settings.nse_c_contour:
                 plt.subplot(111)
