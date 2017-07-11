@@ -125,7 +125,7 @@ settings_parser.add_argument(u'•image_name',type=str,metavar='{{AttributeName}
 settings_parser.add_argument(u'•title_enabled',type=check_bool,choices=[True,False],metavar='{{True},False}',default=True,help='enable or disable the title that goes above the plot')
 settings_parser.add_argument(u'•title_font',type=str,metavar='str',help='choose the font of the plot title')
 settings_parser.add_argument(u'•title_font_size',type=check_int,default=18,metavar='int',help='font size for title')
-settings_parser.add_argument(u'•label_font_size',type=check_int,metavar='int',help='font size for axis labels')
+settings_parser.add_argument(u'•label_font_size',type=check_int,default=12,metavar='int',help='font size for axis labels')
 settings_parser.add_argument(u'•smooth_zones',type=check_bool,choices=[True,False],metavar='{True,{False}}',default=False,help='disable or enable zone smoothing')
 settings_parser.add_argument(u'•image_format',type=str,choices=['png','svg','pdf','ps','jpeg','gif','tiff','eps'],default='png',metavar="{{'png'},'svg','pdf','ps','jpeg','gif','tiff','eps'}",help='specify graph output format')
 settings_parser.add_argument(u'•image_size',type=check_int,nargs=2,metavar='int',default=[1280,710],help='specify the size of image')
