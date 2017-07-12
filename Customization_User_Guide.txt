@@ -19,6 +19,7 @@ for a Windows machine:
     python plot.py -s plot.config example_xml.xml 
 The flag ‘-s’ corresponds to the settings flag used to set the config file to use for customization. The above command line expression
 will generate a plot according to the customization features contained in the config file. 
+
 Config File Instructions:
 	The config file contains plot options available for a user to customize. Lines preceded by ‘//’ indicate a comment and have no effect
 on the plot. To alter the features of a plot, the user may simply uncomment a line by deleting the preceding ‘//’, and selecting a valid
