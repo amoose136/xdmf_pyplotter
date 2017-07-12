@@ -1,4 +1,35 @@
-This file is intended to describe the customization options available to the user pertaining to the plot.py program. A list of the available options is posted below:
+Pyplotter Instructions:
+	The pyplotter routine is interfaced through the command line by the user. The pyplotter consists of four files: plot.py, plot.config,
+an h5 file, and the xml/xdmf document. Polt.py consists of the python code used to read the xml/xdmf and the config file. The config
+file contains information pertaining to the customization of the pyplot (the available options are enumerated below). The h5 file
+contains the data for the pyplotter to illustrate. The xml/xdmf document is created using the associated write_xml.py program (a more
+detailed understanding of this program can be found at https://github.com/amoose136/visit_xdmf) and contains instructions for the
+pyplotter regarding the handling of the h5 file. The pyplotter is compatible with Python 3.6. To generate a plot the user should follow
+the below steps:
+1.	The user must have the proper version of python installed.
+2.	Plot.py, the config file, the h5 file, and the xml/xdmf document should be in the same file location.
+3.	The user must follow the pathway in the command window to the appropriate file location housing the aforementioned files. 
+4.	The user may invoke the help flag for an in-depth description of the program. An example call is given for a Windows machine:
+    python plot.py -h example_xml.xml
+If there are multiple versions of python on the user’s device, one must specify the pathway to the correct version of python, or the
+default version will be utilized. In the above command line expression, ‘-h’ signifies a call to the help flag, and ‘example_xml.xml’
+serves as the xml document containing instructions for the pyplotter. 
+5.	To generate the plot the user must specify the program, the config file, and the xml/xdmf document. An example expression is given 
+for a Windows machine:
+    python plot.py -s plot.config example_xml.xml 
+The flag ‘-s’ corresponds to the settings flag used to set the config file to use for customization. The above command line expression
+will generate a plot according to the customization features contained in the config file. 
+Config File Instructions:
+	The config file contains plot options available for a user to customize. Lines preceded by ‘//’ indicate a comment and have no effect
+on the plot. To alter the features of a plot, the user may simply uncomment a line by deleting the preceding ‘//’, and selecting a valid
+value for any particular argument. For example, the line:
+// cbar_scale lin 
+has no effect on the customized plot as the default color bar scale is linear. Altering the above line to the following will change 
+the scale from linear to logarithmic:
+cbar_scale log
+The removal of ‘//’ means this line will no longer be treated as a comment, and the transition from ‘lin’ to ‘log’ will alter the 
+scaling from a linear to a logarithmic one. This file is intended to describe the customization options available to the user 
+pertaining to the plot.py program. A list of the available options is posted below:
 1.	cmap 
 2.	background_color 
 3.	text_color
