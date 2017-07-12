@@ -133,10 +133,10 @@ The ‘elapsed_time_enabled’ feature displays the elapsed time since initiatio
 The ‘zoom_value’ option allows the user to set the zoom value (percentage of total range) to use if the x or y range is not specified by the user (i.e. left as automatic).
 
 29.	var_unit: {default = ‘auto’} (Type = str)
-The ‘var_unit’ option allows the user to specify the unit to use for the plotter variable.
+The ‘var_unit’ option allows the user to specify the unit to use for the plotter variable. (Not currently implemented)
 
 30.	shock_enabled: {default = False} (Type = bool)
-The ‘shock_enabled’ feature toggles the presence of an overlain plot depicting the primary shock wave radius. (Note: currently the feature is marred with discontinuities.)
+The ‘shock_enabled’ feature toggles the presence of an overlain plot depicting the primary shock wave radius. Note: this feature uses extrapolation from the r_shock variable to generate a continuous line depicting the primary shock. Set this option to 'True' to display the line.
 
 31.	shock_linestyle: {default = solid} (Type = str)
 This option allows the user to select their desired style for the shock radius line. Other arguments include, but are not limited to, dashed and dotted. 
@@ -151,7 +151,7 @@ This option allows the user to customize the line width of the plotted shock rad
 This option allows the user to customize the line color of the plotted shock radius line.
 
 35.	nse_c_contour: {default = False} (Type = bool)
-This option allows the user to toggle the presence of a contour map depicting the NSE boundary. 
+This option allows the user to toggle the presence of a contour map depicting the NSE boundary. Set this option to 'True' to add this auxillary plot. 
 
 36.	nse_c_line_widths: {default = 4} (Type = float)
 This option allows the user to customize the thickness of the contour lines pertaining to the overlain NSE boundary. 
@@ -166,13 +166,13 @@ This option allows the user to select their desired line style for the NSE bound
 This option allows the user to toggle the overlay of tracer particles on the plot of the variable of interest. 
 
 40.	particle_color: {default = black} (Type = black)
-This option allows the user to select he color of the overlain tracer particles. 
+This option allows the user to select the color of the overlain tracer particles. 
 
 41.	particle_size: {default = 0.7} (Type = float)
 This option allows the user to select the size of the overlain tracer particles. 
 
 42.	particle_numbers: {default = False} (Type = bool)
-This option allows the user to plot overlain particles, but rather than displaying points at the particle locations, numbers pertaining to each particles position is displayed. WARNING: this option will greatly reduce the speed at which a plot is generated!
+This option allows the user to plot overlain particles, but rather than displaying points at the particle locations, numbers pertaining to each particles identity is displayed. WARNING: this option will reduce the speed at which a plot is generated. The particle_overlay argument must be set to true for this argument to have any effect. 
 
 43.	particle_num_size: {default = 5} (Type = float)
 This option allows the user to set the size of the tracer particles if the user selects to display them as numbers.
