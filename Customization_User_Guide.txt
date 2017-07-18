@@ -1,4 +1,36 @@
-This file is intended to describe the customization options available to the user pertaining to the plot.py program. A list of the available options is posted below:
+Pyplotter Instructions:
+	The pyplotter routine is interfaced through the command line by the user. The pyplotter consists of four files: plot.py, plot.config,
+an h5 file, and the xml/xdmf document. Polt.py consists of the python code used to read the xml/xdmf and the config file. The config
+file contains information pertaining to the customization of the pyplot (the available options are enumerated below). The h5 file
+contains the data for the pyplotter to illustrate. The xml/xdmf document is created using the associated write_xml.py program (a more
+detailed understanding of this program can be found at https://github.com/amoose136/visit_xdmf) and contains instructions for the
+pyplotter regarding the handling of the h5 file. The pyplotter is compatible with Python 3.6. To generate a plot the user should follow
+the below steps:
+1.	The user must have the proper version of python installed.
+2.	Plot.py, the config file, the h5 file, and the xml/xdmf document should be in the same file location.
+3.	The user must follow the pathway in the command window to the appropriate file location housing the aforementioned files. 
+4.	The user may invoke the help flag for an in-depth description of the program. An example call is given for a Windows machine:
+    		python plot.py -h example_xml.xml
+	If there are multiple versions of python on the user’s device, one must specify the pathway to the correct version of python, or 
+	thedefault version will be utilized. In the above command line expression, ‘-h’ signifies a call to the help flag, and 	
+	‘example_xml.xml’serves as the xml document containing instructions for the pyplotter. 
+5.	To generate the plot the user must specify the program, the config file, and the xml/xdmf document. An example expression is
+	given for a Windows machine:
+		python plot.py -s plot.config example_xml.xml 
+	The flag ‘-s’ corresponds to the settings flag used to set the config file to use for customization. The above command line 
+	expression will generate a plot according to the customization features contained in the config file. 
+
+Config File Instructions:
+	The config file contains plot options available for a user to customize. Lines preceded by ‘//’ indicate a comment and have no effect
+on the plot. To alter the features of a plot, the user may simply uncomment a line by deleting the preceding ‘//’ and select a valid
+value for any particular argument. For example, the line:
+// cbar_scale lin 
+has no effect on the customized plot as the default color bar scale is linear. Altering the above line to the following will change 
+the scale from linear to logarithmic:
+cbar_scale log
+The removal of ‘//’ means this line will no longer be treated as a comment, and the transition from ‘lin’ to ‘log’ will alter the 
+scaling from a linear to a logarithmic one. This file is intended to describe the customization options available to the user 
+pertaining to the plot.py program. A list of the available options is posted below:
 1.	cmap 
 2.	background_color 
 3.	text_color
@@ -133,10 +165,10 @@ The ‘elapsed_time_enabled’ feature displays the elapsed time since initiatio
 The ‘zoom_value’ option allows the user to set the zoom value (percentage of total range) to use if the x or y range is not specified by the user (i.e. left as automatic).
 
 29.	var_unit: {default = ‘auto’} (Type = str)
-The ‘var_unit’ option allows the user to specify the unit to use for the plotter variable.
+The ‘var_unit’ option allows the user to specify the unit to use for the plotter variable. (Not currently implemented)
 
 30.	shock_enabled: {default = False} (Type = bool)
-The ‘shock_enabled’ feature toggles the presence of an overlain plot depicting the primary shock wave radius. (Note: currently the feature is marred with discontinuities.)
+The ‘shock_enabled’ feature toggles the presence of an overlain plot depicting the primary shock wave radius. Note: this feature uses extrapolation from the r_shock variable to generate a continuous line depicting the primary shock. Set this option to 'True' to display the line.
 
 31.	shock_linestyle: {default = solid} (Type = str)
 This option allows the user to select their desired style for the shock radius line. Other arguments include, but are not limited to, dashed and dotted. 
@@ -151,7 +183,7 @@ This option allows the user to customize the line width of the plotted shock rad
 This option allows the user to customize the line color of the plotted shock radius line.
 
 35.	nse_c_contour: {default = False} (Type = bool)
-This option allows the user to toggle the presence of a contour map depicting the NSE boundary. 
+This option allows the user to toggle the presence of a contour map depicting the NSE boundary. Set this option to 'True' to add this auxillary plot. 
 
 36.	nse_c_line_widths: {default = 4} (Type = float)
 This option allows the user to customize the thickness of the contour lines pertaining to the overlain NSE boundary. 
@@ -166,13 +198,13 @@ This option allows the user to select their desired line style for the NSE bound
 This option allows the user to toggle the overlay of tracer particles on the plot of the variable of interest. 
 
 40.	particle_color: {default = black} (Type = black)
-This option allows the user to select he color of the overlain tracer particles. 
+This option allows the user to select the color of the overlain tracer particles. 
 
 41.	particle_size: {default = 0.7} (Type = float)
 This option allows the user to select the size of the overlain tracer particles. 
 
 42.	particle_numbers: {default = False} (Type = bool)
-This option allows the user to plot overlain particles, but rather than displaying points at the particle locations, numbers pertaining to each particles position is displayed. WARNING: this option will greatly reduce the speed at which a plot is generated!
+This option allows the user to plot overlain particles, but rather than displaying points at the particle locations, numbers pertaining to each particles identity is displayed. WARNING: this option will reduce the speed at which a plot is generated. The particle_overlay argument must be set to true for this argument to have any effect. 
 
 43.	particle_num_size: {default = 5} (Type = float)
 This option allows the user to set the size of the tracer particles if the user selects to display them as numbers.
