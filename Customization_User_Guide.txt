@@ -78,7 +78,9 @@ pertaining to the plot.py program. A list of the available options is posted bel
 45.	shock_contour_line_widths
 46.	shock_contour_cmap 
 47.	shock_contour_style
-
+48.	cbar_over_color 
+49.	cbar_under_color
+50.	cbar_bad_color
 
 1.	cmap: {default = hot_desaturated} (Type = str)
 The ‘cmap’ option refers to the colormap of the primary variable being plotted. The ‘hot_desaturated’ option is a custom bar built within the pyplotter program. One may reference the matplotlib documentation or the help flag for an assortment of colormap options.
@@ -220,3 +222,12 @@ This option allows the user to select the colormap to apply to the shock contour
 
 47.	shock_contour_style: {default = solid} (Type = str)
 This option allows the user to select the desired line type for the shock contour plot.
+
+48.	cbar_over_color hotpink
+This option allows the user to select a color to display for values above the color bar range; otherwise, the color will be the same as top of the color bar if not set.
+
+49.	cbar_under_color hotpink
+This option allows the user to select a color to display for values below the color bar range; otherwise, the color will be the same as the bottom of the color bar if not set.
+
+50.	cbar_bad_color black
+This option allows the user to select a color to display for bad values (NaN, etc.); otherwise, the color will be the same as background if not set.
