@@ -4,7 +4,7 @@ an h5 file, and the xml/xdmf document. Polt.py consists of the python code used 
 file contains information pertaining to the customization of the pyplot (the available options are enumerated below). The h5 file
 contains the data for the pyplotter to illustrate. The xml/xdmf document is created using the associated write_xml.py program (a more
 detailed understanding of this program can be found at https://github.com/amoose136/visit_xdmf) and contains instructions for the
-pyplotter regarding the handling of the h5 file. The pyplotter is compatible with Python 3.6. To generate a plot the user should follow
+pyplotter regarding the handling of the h5 file. The pyplotter is compatible with Python 2.7 and 3.6. To generate a plot the user should follow
 the below steps:
 1.	The user must have the proper version of python installed.
 2.	Plot.py, the config file, the h5 file, and the xml/xdmf document should be in the same file location.
@@ -12,17 +12,17 @@ the below steps:
 4.	The user may invoke the help flag for an in-depth description of the program. An example call is given for a Windows machine:
     		python plot.py -h example_xml.xml
 	If there are multiple versions of python on the user’s device, one must specify the pathway to the correct version of python, or 
-	thedefault version will be utilized. In the above command line expression, ‘-h’ signifies a call to the help flag, and 	
+	the default version will be utilized. In the above command line expression, ‘-h’ signifies a call to the help flag, and 	
 	‘example_xml.xml’serves as the xml document containing instructions for the pyplotter. 
 5.	To generate the plot the user must specify the program, the config file, and the xml/xdmf document. An example expression is
 	given for a Windows machine:
 		python plot.py -s plot.config example_xml.xml 
-	The flag ‘-s’ corresponds to the settings flag used to set the config file to use for customization. The above command line 
-	expression will generate a plot according to the customization features contained in the config file. 
+	The flag ‘-s’ corresponds to the settings flag used to set the config file (plot.config) to use for customization. The above
+	command line expression will generate a plot according to the customization features contained in the config file. 
 
 Config File Instructions:
 	The config file contains plot options available for a user to customize. Lines preceded by ‘//’ indicate a comment and have no effect
-on the plot. To alter the features of a plot, the user may simply uncomment a line by deleting the preceding ‘//’ and select a valid
+on the plot. To alter the features of a plot, the user may simply uncomment a line by deleting the preceding ‘//’ and selecting a valid
 value for any particular argument. For example, the line:
 // cbar_scale lin 
 has no effect on the customized plot as the default color bar scale is linear. Altering the above line to the following will change 
@@ -81,7 +81,7 @@ pertaining to the plot.py program. A list of the available options is posted bel
 
 
 1.	cmap: {default = hot_desaturated} (Type = str)
-The ‘cmap’ option refers to the colormap of the primary variable being plotted. The ‘hot_desaturated’ option is a custom bar built within the pyplotter program. One may reference the matplotlib documentation for an assortment of colormap options.
+The ‘cmap’ option refers to the colormap of the primary variable being plotted. The ‘hot_desaturated’ option is a custom bar built within the pyplotter program. One may reference the matplotlib documentation or the help flag for an assortment of colormap options.
 
 2.	background_color: {default = white} (Type = str)
 The ‘background_color’ option allows the user to select a color for the background space of the generated plot. Other options include but are not limited to: black, yellow, red, etc. 
@@ -189,7 +189,7 @@ This option allows the user to toggle the presence of a contour map depicting th
 This option allows the user to customize the thickness of the contour lines pertaining to the overlain NSE boundary. 
 
 37.	nse_cmap: {default = binary} (Type = str)
-This option allows the user to customize the colormap used for the NSE boundary. The user should consult the matplotlib documentation to see more available options. 
+This option allows the user to customize the colormap used for the NSE boundary. The user should consult the matplotlib documentation or the help flag to see more available options. 
 
 38.	nse_c_linestyles: {default = solid} (Type = str)
 This option allows the user to select their desired line style for the NSE boundary. 
@@ -216,7 +216,7 @@ This option allows the user to display a contour of all detected shocks. This op
 This option allows the user to designate the thickness of the shock contour lines.
 
 46.	shock_contour_cmap: {default = binary_r} (Type = str)
-This option allows the user to select the colormap to apply to the shock contour plot. The user should consult the matplotlib documentation for other options. 
+This option allows the user to select the colormap to apply to the shock contour plot. The user should consult the matplotlib documentation of the help flag for other options. 
 
 47.	shock_contour_style: {default = solid} (Type = str)
 This option allows the user to select the desired line type for the shock contour plot.
