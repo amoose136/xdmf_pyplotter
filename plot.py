@@ -651,7 +651,7 @@ for file in args.files:
 	# Comment and uncomment the next line to save the image:
 	plt.savefig(directory+'/'+image_name,format=settings.image_format,facecolor=settings.background_color,orientation='landscape') 
 	qprint('time elapsed:	'+str(time_lib.time()-start_time))
-	del start_time
+	# del start_time
 	if args.debug:
 		if platform.system()=='Darwin':
 			from subprocess import call # for on-the-fly lightning fast image viewing on mac
